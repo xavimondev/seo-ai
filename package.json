@@ -30,5 +30,11 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "dependencies": {
+    "@ai-sdk/mistral": "0.0.22",
+    "ai": "3.2.19",
+    "dotenv": "16.4.5",
+    "zod": "3.23.8"
   }
 }
