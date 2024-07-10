@@ -1,0 +1,26 @@
+{
+  "name": "seo-ai",
+  "version": "0.0.1",
+  "description": "Generate seo data for your website",
+  "main": "index.js",
+  "type": "module",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/xavimondev/seo-ai.git"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": {
+    "name": "Xavi Alfaro",
+    "url": "https://x.com/xavimonp"
+  },
+  "devDependencies": {
+    "prettier": "3.3.2"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
