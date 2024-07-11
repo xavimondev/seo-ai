@@ -29,3 +29,13 @@ export const generateGlobalSEO = async ({
 
   return result.object
 }
+
+export const generateIconDefinition = async ({ prompt }: { prompt: string }) => {
+  const { text } = await generateText({
+    model: mistral('open-mixtral-8x7b'),
+    prompt: `Given the following app description: ${prompt}, return a definition using only three words.`,
+    maxTokens: 1024
+  })
+
+  return text
+}
