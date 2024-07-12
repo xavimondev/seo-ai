@@ -35,21 +35,21 @@ export const init = new Command()
                 { value: 'title', label: 'Title', hint: 'recommended' },
                 { value: 'description', label: 'Description', hint: 'recommended' },
                 { value: 'keywords', label: 'Keywords', hint: 'recommended' },
-                { value: 'metadataBase', label: 'URL prefix for metadata fields' },
+                { value: 'icons', label: 'Icons', hint: 'recommended' },
                 { value: 'openGraph', label: 'Open Graph', hint: 'recommended' },
+                { value: 'metadataBase', label: 'URL prefix for metadata fields' },
                 { value: 'twitter', label: 'Twitter', hint: 'recommended' },
                 { value: 'applicationName', label: 'Application Name' }, // from package.json
                 { value: 'authors', label: 'Authors of the web page' }, // from package.json
                 { value: 'generator', label: 'The generator used' },
-                { value: 'creator', label: 'The creator of the document' }, // from package.json
-                { value: 'publisher', label: 'The publisher of the document' }, // from package.json
-                { value: 'robots', label: 'The robots setting for the document' },
-                { value: 'icons', label: 'The icons for the document', hint: 'recommended' },
-                { value: 'category', label: 'The category meta name property' },
-                { value: 'themeColor', label: 'The theme color for the document' }, // https://nextjs.org/docs/app/api-reference/functions/generate-viewport
-                { value: 'colorSchema', label: 'The color scheme for the document' }
+                { value: 'creator', label: 'Creator of the web' }, // from package.json
+                { value: 'publisher', label: 'Publisher of the document' }, // from package.json
+                { value: 'robots', label: 'Robots settings for the document' },
+                { value: 'category', label: 'Category meta name property' },
+                { value: 'themeColor', label: 'Theme Color for the document' }, // https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+                { value: 'colorSchema', label: 'Color Scheme for the document' }
               ],
-              initialValues: ['title', 'description', 'openGraph', 'twitter']
+              initialValues: ['title', 'description', 'keywords', 'openGraph', 'icons']
             })
         },
         {
@@ -109,7 +109,7 @@ export const init = new Command()
         s.stop(`Icons stored in ${chalk.green('public/seo/icons')}`)
       }
 
-      outro("You're all set!")
+      outro(`You're all set!`)
     } catch (error) {
       handleError(error)
     }
