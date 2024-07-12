@@ -11,9 +11,9 @@ import { generateGlobalSEO, generateIconDefinition } from '@/utils/ai.js'
 import { generateIcon } from '@/utils/replicate.js'
 import { getPackageJson } from '@/utils/getPackageJson.js'
 
-export const init = new Command()
-  .name('init')
-  .description('generate seo')
+export const generate = new Command()
+  .name('generate')
+  .description('Generate SEO metadata or metatags')
   .action(async () => {
     try {
       const result = await group(
