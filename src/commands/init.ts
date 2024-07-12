@@ -1,6 +1,11 @@
-// import { setTimeout } from 'node:timers/promises'
+import { existsSync, mkdirSync } from 'node:fs'
+import path from 'node:path'
+import { Readable } from 'node:stream'
+import { writeFile } from 'node:fs/promises'
+import { type ReadableStream } from 'node:stream/web'
 import { Command } from 'commander'
 import { cancel, outro, text, group, multiselect, spinner } from '@clack/prompts'
+import chalk from 'chalk'
 import { handleError } from '@/utils/handleError.js'
 import { DEFAULT_SEO_SCHEMA } from '@/constants.js'
 import { generateGlobalSEO, generateIconDefinition } from '@/utils/ai.js'
@@ -81,13 +86,27 @@ export const init = new Command()
           prompt: description
         })
 
-        const icon = await generateIcon({
+        const iconUrl = await generateIcon({
           iconDefinition
         })
 
-        console.log(icon)
+        console.log(iconUrl)
 
-        s.stop('Icons generated!')
+        const cwd = path.resolve(process.cwd())
+        const publicDirectory = `${cwd}/public/seo/icons`
+
+        if (!existsSync(publicDirectory)) {
+          mkdirSync(publicDirectory, {
+            recursive: true
+          })
+        }
+
+        const response = await fetch(iconUrl)
+        const body = Readable.fromWeb(response.body as ReadableStream<any>)
+        const filePath = path.join(publicDirectory, 'icon.png')
+        await writeFile(filePath, body)
+
+        s.stop(`Icons stored in ${chalk.green('public/seo/icons')}`)
       }
 
       outro("You're all set!")

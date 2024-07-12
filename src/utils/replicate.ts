@@ -28,7 +28,7 @@ export const generateIcon = async ({ iconDefinition }: { iconDefinition: string 
   const imageUrl = output.at(0)
   // console.log({ imageUrl })
   const icon = await removeBackground({ imageUrl })
-  return icon
+  return String(icon)
 }
 
 const removeBackground = async ({ imageUrl }: { imageUrl: string }) => {
