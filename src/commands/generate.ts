@@ -1,176 +1,105 @@
-import { existsSync, mkdirSync } from 'node:fs'
-import path from 'node:path'
-import { Readable } from 'node:stream'
-import { writeFile } from 'node:fs/promises'
-import { type ReadableStream } from 'node:stream/web'
 import { Command } from 'commander'
-import { cancel, outro, text, group, spinner } from '@clack/prompts'
+import { cancel, outro, text, spinner, multiselect, isCancel } from '@clack/prompts'
+import { z } from 'zod'
 import { handleError } from '@/utils/handleError.js'
-import { SEO_ITEMS_AI } from '@/constants.js'
-import { generateGlobalSEO, generateIconDefinition } from '@/utils/ai.js'
-import { generateIcon } from '@/utils/replicate.js'
-import { getPackageJson } from '@/utils/getPackageJson.js'
+import { generateCoreSeoTags, SEO_GENERATOR } from '@/utils/seoGeneration.js'
+import { logger } from '@/utils/logger.js'
+
+const generateSchema = z.object({
+  tags: z.array(z.string()).optional()
+})
 
 export const generate = new Command()
   .name('generate')
+  .argument('[tags...]', 'metatag property')
   .description('Generate SEO metadata or metatags')
-  .action(async () => {
-    try {
-      const result = await group(
-        {
-          description: () =>
-            text({
-              message: 'Enter a brief description of your project',
-              placeholder: 'page to generate readmes using ai',
-              validate(value) {
-                const descriptionLength = value.trim().length
-                if (descriptionLength === 0) return `Description is required!`
-                if (descriptionLength < 10) return `Description must be at least 10 characters!`
-              }
-            })
-        },
-        {
-          onCancel: ({ results }) => {
-            // console.log(results)
-            cancel('Operation cancelled.')
-            process.exit(0)
-          }
-        }
-      )
+  .action(async (tags) => {
+    const options = generateSchema.parse({ tags })
+    let seoTags = options.tags
 
-      const { description } = result
+    try {
+      if (!options.tags?.length) {
+        const aditionalSeoTags = await multiselect({
+          message: `Which SEO items do you want to generate for your project?`,
+          options: [
+            { value: 'core', label: 'Include core SEO tags', hint: 'recommended' },
+            { value: 'applicationName', label: 'Application Name' },
+            { value: 'metadataBase', label: 'URL prefix for metadata fields' },
+            { value: 'authors', label: 'Authors' },
+            { value: 'creator', label: 'Creator' },
+            { value: 'publisher', label: 'Publisher of the Document' },
+            { value: 'classification', label: 'Classification' },
+            { value: 'bookmarks', label: 'Bookmarks' },
+            { value: 'assets', label: 'Assets' },
+            { value: 'archives', label: 'Archives' },
+            { value: 'referrer', label: 'Referrer' },
+            { value: 'alternates', label: 'Alternates' },
+            { value: 'formatDetection', label: 'Format Detection' },
+            { value: 'manifest', label: 'Manifest' },
+            { value: 'verification', label: 'Verification' },
+            { value: 'viewport', label: 'Colors' }, // https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+            { value: 'generator', label: 'Generator used' }
+          ],
+          initialValues: ['core'],
+          required: true
+        })
+
+        if (isCancel(aditionalSeoTags)) {
+          cancel('Operation cancelled.')
+          process.exit(0)
+        }
+
+        seoTags = aditionalSeoTags as string[]
+      }
+
+      const description = await text({
+        message: 'Enter a brief description of your project',
+        placeholder: 'page to generate readmes using ai',
+        validate(value) {
+          const descriptionLength = value.trim().length
+          if (descriptionLength === 0) return `Description is required!`
+          if (descriptionLength < 10) return `Description must be at least 10 characters!`
+        }
+      })
+
+      if (isCancel(description)) {
+        cancel('Operation cancelled.')
+        process.exit(0)
+      }
 
       const s = spinner()
       s.start('Generating SEO data...')
 
-      let SEO_METADATA = undefined
+      let SEO_METADATA = {}
 
-      const seo = await generateGlobalSEO({
-        description
-      })
+      if (seoTags) {
+        for (const seoTag of seoTags) {
+          // Generate core SEO tags using AI
+          if (seoTag === 'core') {
+            const coreSeoProps = await generateCoreSeoTags({ description })
+            SEO_METADATA = coreSeoProps
+          } else {
+            const getTagContent = SEO_GENERATOR[seoTag]
 
-      // Generating icons
-      const iconDefinition = await generateIconDefinition({
-        prompt: description
-      })
-
-      const iconUrl = await generateIcon({
-        iconDefinition
-      })
-
-      const cwd = path.resolve(process.cwd())
-      const seoDirectory = `public/seo/icons`
-      const publicDirectory = `${cwd}/${seoDirectory}`
-
-      if (!existsSync(publicDirectory)) {
-        mkdirSync(publicDirectory, {
-          recursive: true
-        })
-      }
-
-      const response = await fetch(iconUrl)
-      const body = Readable.fromWeb(response.body as ReadableStream<any>)
-      const fileIconPath = path.join(publicDirectory, 'icon.png')
-      await writeFile(fileIconPath, body)
-      const fileAppleIconPath = path.join(publicDirectory, 'apple-icon.png')
-      await writeFile(fileAppleIconPath, body)
-
-      const icons = {
-        icon: '/seo/icons/icon.png',
-        apple: '/seo/icons/apple-icon.png'
-      }
-
-      SEO_METADATA = {
-        ...seo,
-        icons
-      }
-
-      if (SEO_ITEMS_AI.includes('applicationName')) {
-        const packageInfo = getPackageJson()
-        const appName = packageInfo.name ?? 'wonderful-app'
-
-        SEO_METADATA = {
-          ...SEO_METADATA,
-          applicationName: appName
-        }
-      }
-
-      if (SEO_ITEMS_AI.includes('authors')) {
-        const packageInfo = getPackageJson()
-        const authors = packageInfo.author
-          ? typeof packageInfo.author === 'string'
-            ? { name: packageInfo.author, url: `https://github.com/${packageInfo.author}` }
-            : {
-                name: packageInfo.author?.name ?? '@seodev',
-                url: packageInfo.author?.url ?? 'https//github.com/seodev'
-              }
-          : '@seodev'
-
-        SEO_METADATA = {
-          ...SEO_METADATA,
-          authors
-        }
-      }
-
-      if (SEO_ITEMS_AI.includes('creator')) {
-        const packageInfo = getPackageJson()
-        const creator = packageInfo.author
-          ? typeof packageInfo.author === 'string'
-            ? packageInfo.author
-            : packageInfo.author?.name ?? '@seodev'
-          : '@seodev'
-
-        SEO_METADATA = {
-          ...SEO_METADATA,
-          creator
-        }
-      }
-
-      if (SEO_ITEMS_AI.includes('publisher')) {
-        SEO_METADATA = {
-          ...SEO_METADATA,
-          publisher: 'seo-AI'
-        }
-      }
-
-      if (SEO_ITEMS_AI.includes('twitter') && SEO_METADATA) {
-        const twitterGraphImage = [
-          {
-            url: '/seo/banner/og.png',
-            with: 1200,
-            height: 675,
-            alt: 'Seo AI'
+            SEO_METADATA = {
+              ...SEO_METADATA,
+              ...getTagContent()
+            }
           }
-        ]
+        }
 
+        // TODO: improve this, looks weird
         SEO_METADATA = {
           ...SEO_METADATA,
+          openGraph: {
+            // @ts-ignore
+            ...SEO_METADATA.openGraph,
+            ...SEO_GENERATOR['images']()
+          },
           twitter: {
             // @ts-ignore
             ...SEO_METADATA.twitter,
-            images: twitterGraphImage
-          }
-        }
-      }
-
-      if (SEO_ITEMS_AI.includes('openGraph') && SEO_METADATA) {
-        const graphImage = [
-          {
-            url: '/seo/banner/og.png',
-            with: 1200,
-            height: 675,
-            alt: 'Seo AI'
-          }
-        ]
-
-        if (SEO_METADATA) {
-          SEO_METADATA = {
-            ...SEO_METADATA,
-            openGraph: {
-              // @ts-ignore
-              ...SEO_METADATA.openGraph,
-              images: graphImage
-            }
+            ...SEO_GENERATOR['images']()
           }
         }
       }
@@ -178,7 +107,8 @@ export const generate = new Command()
       s.stop('SEO generated 🚀!')
 
       outro(`You're all set!`)
-      console.log(SEO_METADATA)
+      logger.break()
+      logger.info(JSON.stringify(SEO_METADATA, null, 2))
     } catch (error) {
       handleError(error)
     }
