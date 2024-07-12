@@ -15,8 +15,8 @@ export const DEFAULT_SEO_SCHEMA = z.object({
     // images: z.array(
     //   z.object({
     //     url: z.string(),
-    //     with: z.number()
-    //     height: z.number()
+    //     with: z.number(),
+    //     height: z.number(),
     //     alt: z.string()
     //   })
     // )
@@ -25,19 +25,27 @@ export const DEFAULT_SEO_SCHEMA = z.object({
     card: z.string(),
     site: z.string(),
     title: z.string(),
-    description: z.string(),
-    image: z.string(),
-    imageAlt: z.string()
+    description: z.string()
+    // images: z.array(
+    //   z.object({
+    //     url: z.string(),
+    //     with: z.number(),
+    //     height: z.number(),
+    //     alt: z.string()
+    //   })
+    // )
   }),
-  applicationName: z.string(),
-  authors: z.array(z.object({ name: z.string(), url: z.string() })),
+  // applicationName: z.string(),
+  // authors: z.array(z.object({ name: z.string(), url: z.string() })), ✅
   generator: z.string(),
-  creator: z.string(),
-  publisher: z.string(),
+  // creator: z.string(), ✅
+  // publisher: z.string(), ✅
   robots: z.string(), // index, follow
-  icons: z.object({
-    icon: z.string(),
-    apple: z.string()
-  }),
+  // icons: z.object({ ✅
+  //   icon: z.string(),
+  //   apple: z.string()
+  // }),
   category: z.string()
 })
+
+export const FIELDS_WITHOUT_AI = ['applicationName', 'authors', 'creator', 'publisher', 'icons']
