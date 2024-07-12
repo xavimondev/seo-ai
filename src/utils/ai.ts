@@ -1,6 +1,7 @@
 import { mistral } from '@ai-sdk/mistral'
 import { generateObject, generateText } from 'ai'
 import { z } from 'zod'
+import { DEFAULT_SEO_SCHEMA } from '@/constants.js'
 
 export const generateSEO = async ({ description }: { description: string }) => {
   const { text } = await generateText({
@@ -13,16 +14,10 @@ export const generateSEO = async ({ description }: { description: string }) => {
   return text
 }
 
-export const generateGlobalSEO = async ({
-  description,
-  seoSchema
-}: {
-  description: string
-  seoSchema: z.ZodType<any, any> // TODO: type
-}) => {
+export const generateGlobalSEO = async ({ description }: { description: string }) => {
   const result = await generateObject({
     model: mistral('open-mixtral-8x7b'),
-    schema: z.object({ seo: seoSchema }),
+    schema: z.object({ seo: DEFAULT_SEO_SCHEMA }),
     prompt: `You are an SEO expert. Analyze the project information: ${description} and generate a comprehensive, SEO-friendly metadata.`
     // maxTokens: 1024
   })
