@@ -3,17 +3,6 @@ import { generateObject, generateText } from 'ai'
 import { z } from 'zod'
 import { DEFAULT_SEO_SCHEMA, SEO_TAGS } from '@/constants.js'
 
-export const generateSEO = async ({ description }: { description: string }) => {
-  const { text } = await generateText({
-    model: mistral('open-mixtral-8x7b'),
-    prompt: `Write a vegetarian lasagna recipe for 4 people.`,
-    maxTokens: 150
-    // messages: []
-  })
-
-  return text
-}
-
 export const generateGlobalSEO = async ({ description }: { description: string }) => {
   const result = await generateObject({
     model: mistral('open-mixtral-8x7b'),
