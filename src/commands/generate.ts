@@ -23,7 +23,6 @@ export const generate = new Command()
   .option('-m, --metadata', 'generate JSON metadata', false)
   .option('-h, --html', 'generate HTML metatags', false)
   .action(async (tags, opts) => {
-    console.log(opts)
     const options = generateSchema.parse({ tags, ...opts })
     let seoTags = options.tags
 
