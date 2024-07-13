@@ -2,19 +2,29 @@ import { Command } from 'commander'
 import { cancel, outro, text, spinner, multiselect, isCancel } from '@clack/prompts'
 import { z } from 'zod'
 import { handleError } from '@/utils/handleError.js'
-import { generateCoreSeoTags, SEO_GENERATOR } from '@/utils/seoGeneration.js'
+import {
+  generateCoreSeoTags,
+  generateCoreSeoHtmlTags,
+  SEO_GENERATOR,
+  SEO_GENERATOR_HTML
+} from '@/utils/seoGeneration.js'
 import { logger } from '@/utils/logger.js'
 
 const generateSchema = z.object({
-  tags: z.array(z.string()).optional()
+  tags: z.array(z.string()).optional(),
+  metadata: z.boolean().optional(),
+  html: z.boolean().optional()
 })
 
 export const generate = new Command()
   .name('generate')
   .argument('[tags...]', 'metatag property')
-  .description('Generate SEO metadata or metatags')
-  .action(async (tags) => {
-    const options = generateSchema.parse({ tags })
+  .description('Generate object metadata or HTML metatags')
+  .option('-m, --metadata', 'generate JSON metadata', false)
+  .option('-h, --html', 'generate HTML metatags', false)
+  .action(async (tags, opts) => {
+    console.log(opts)
+    const options = generateSchema.parse({ tags, ...opts })
     let seoTags = options.tags
 
     try {
@@ -27,13 +37,13 @@ export const generate = new Command()
             { value: 'metadataBase', label: 'URL prefix for metadata fields' },
             { value: 'authors', label: 'Authors' },
             { value: 'creator', label: 'Creator' },
-            { value: 'publisher', label: 'Publisher of the Document' },
+            { value: 'publisher', label: 'Publisher' },
             { value: 'classification', label: 'Classification' },
             { value: 'bookmarks', label: 'Bookmarks' },
             { value: 'assets', label: 'Assets' },
             { value: 'archives', label: 'Archives' },
             { value: 'referrer', label: 'Referrer' },
-            { value: 'alternates', label: 'Alternates' },
+            { value: 'alternates', label: 'Canonical URL' },
             { value: 'formatDetection', label: 'Format Detection' },
             { value: 'manifest', label: 'Manifest' },
             { value: 'verification', label: 'Verification' },
@@ -71,35 +81,46 @@ export const generate = new Command()
       s.start('Generating SEO data...')
 
       let SEO_METADATA = {}
+      let HTML_METATAGS = ''
 
       if (seoTags) {
         for (const seoTag of seoTags) {
           // Generate core SEO tags using AI
           if (seoTag === 'core') {
-            const coreSeoProps = await generateCoreSeoTags({ description })
-            SEO_METADATA = coreSeoProps
+            if (opts.metadata) {
+              SEO_METADATA = await generateCoreSeoTags({ description })
+            } else {
+              HTML_METATAGS = await generateCoreSeoHtmlTags({ description })
+            }
           } else {
-            const getTagContent = SEO_GENERATOR[seoTag]
+            if (opts.metadata) {
+              const getTagContent = SEO_GENERATOR[seoTag]
 
-            SEO_METADATA = {
-              ...SEO_METADATA,
-              ...getTagContent()
+              SEO_METADATA = {
+                ...SEO_METADATA,
+                ...getTagContent()
+              }
+            } else {
+              const getTagContent = SEO_GENERATOR_HTML[seoTag]
+              HTML_METATAGS = HTML_METATAGS.concat(getTagContent())
             }
           }
         }
 
-        // TODO: improve this, looks weird
-        SEO_METADATA = {
-          ...SEO_METADATA,
-          openGraph: {
-            // @ts-ignore
-            ...SEO_METADATA.openGraph,
-            ...SEO_GENERATOR['images']()
-          },
-          twitter: {
-            // @ts-ignore
-            ...SEO_METADATA.twitter,
-            ...SEO_GENERATOR['images']()
+        if (opts.metadata) {
+          // TODO: improve this, looks weird
+          SEO_METADATA = {
+            ...SEO_METADATA,
+            openGraph: {
+              // @ts-ignore
+              ...SEO_METADATA.openGraph,
+              ...SEO_GENERATOR['images']()
+            },
+            twitter: {
+              // @ts-ignore
+              ...SEO_METADATA.twitter,
+              ...SEO_GENERATOR['images']()
+            }
           }
         }
       }
@@ -108,7 +129,7 @@ export const generate = new Command()
 
       outro(`You're all set!`)
       logger.break()
-      logger.info(JSON.stringify(SEO_METADATA, null, 2))
+      logger.info(opts.metadata ? JSON.stringify(SEO_METADATA, null, 2) : HTML_METATAGS)
     } catch (error) {
       handleError(error)
     }

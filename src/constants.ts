@@ -32,7 +32,7 @@ export const DEFAULT_SEO_SCHEMA = z.object({
   category: z.string()
 })
 
-export const SEO_ITEMS_AI = [
+export const SEO_TAGS = [
   'title',
   'description',
   'keywords',
