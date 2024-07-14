@@ -1,14 +1,13 @@
 import { Command } from 'commander'
 import { cancel, outro, text, spinner, multiselect, isCancel } from '@clack/prompts'
 import { z } from 'zod'
+import { createMistral } from '@ai-sdk/mistral'
+import { createOpenAI } from '@ai-sdk/openai'
 import { handleError } from '@/utils/handleError.js'
-import {
-  generateCoreSeoTags,
-  generateCoreSeoHtmlTags,
-  SEO_GENERATOR,
-  SEO_GENERATOR_HTML
-} from '@/utils/seoGeneration.js'
+import { SEO_GENERATOR, SEO_GENERATOR_HTML } from '@/utils/seoGeneration.js'
 import { logger } from '@/utils/logger.js'
+import { getConf, getKey, Providers } from '@/utils/conf.js'
+import { generateGlobalSEO, generateHTMLTags } from '@/utils/ai.js'
 
 const generateSchema = z.object({
   tags: z.array(z.string()).optional(),
@@ -25,6 +24,32 @@ export const generate = new Command()
   .action(async (tags, opts) => {
     const options = generateSchema.parse({ tags, ...opts })
     let seoTags = options.tags
+
+    const lastProvider = Object.keys(getConf()).at(-1)
+    if (!lastProvider) {
+      logger.info(`You need to configure your provider first. Run:`)
+      logger.success(`npx seo-ai config set YOUR_AI_PROVIDER=YOUR_API_KEY`)
+      process.exit(0)
+    }
+
+    const apiKey = getKey({ provider: lastProvider as Providers }) as string
+    // AI Providers
+    let model = undefined
+    if (lastProvider === 'mistral') {
+      const mistral = createMistral({
+        apiKey
+      })
+      model = mistral('mistral-large-latest')
+    } else if (lastProvider === 'openai') {
+      const openai = createOpenAI({
+        apiKey,
+        compatibility: 'strict'
+      })
+      model = openai('gpt-3.5-turbo')
+    } else {
+      logger.error('Invalid provider')
+      process.exit(0)
+    }
 
     try {
       if (!options.tags?.length) {
@@ -87,9 +112,9 @@ export const generate = new Command()
           // Generate core SEO tags using AI
           if (seoTag === 'core') {
             if (opts.metadata) {
-              SEO_METADATA = await generateCoreSeoTags({ description })
+              SEO_METADATA = await generateGlobalSEO({ description, model })
             } else {
-              HTML_METATAGS = await generateCoreSeoHtmlTags({ description })
+              HTML_METATAGS = await generateHTMLTags({ description, model })
             }
           } else {
             if (opts.metadata) {
@@ -106,7 +131,8 @@ export const generate = new Command()
           }
         }
 
-        if (opts.metadata) {
+        // @ts-ignore
+        if (opts.metadata && SEO_METADATA.openGraph && SEO_METADATA.twitter) {
           // TODO: improve this, looks weird
           SEO_METADATA = {
             ...SEO_METADATA,

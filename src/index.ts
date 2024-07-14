@@ -5,6 +5,7 @@ import { intro } from '@clack/prompts'
 import chalk from 'chalk'
 import { getPackageJson } from '@/utils/getPackageJson.js'
 import { generate } from '@/commands/generate.js'
+import { config } from '@/commands/config.js'
 
 dotenv.config()
 
@@ -21,7 +22,7 @@ async function main() {
     .version(packageInfo.version || '0.0.1', '-v, --version', 'display the version number')
 
   intro(chalk.inverse(NAME_APP))
-  program.addCommand(generate)
+  program.addCommand(generate).addCommand(config)
   program.parse()
 }
 
