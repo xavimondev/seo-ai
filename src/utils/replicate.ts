@@ -1,10 +1,16 @@
 import Replicate from 'replicate'
 
-const replicate = new Replicate({
-  auth: process.env.REPLICATE_API_TOKEN
-})
+export const generateIcon = async ({
+  iconDefinition,
+  apiKey
+}: {
+  iconDefinition: string
+  apiKey: string
+}) => {
+  const replicate = new Replicate({
+    auth: apiKey
+  })
 
-export const generateIcon = async ({ iconDefinition }: { iconDefinition: string }) => {
   const output = await replicate.run(
     'nandycc/sdxl-app-icons:5839ce85291601c6af252443a642a1cbd12eea8c83e41f27946b9212ff845dbf',
     {
@@ -27,11 +33,15 @@ export const generateIcon = async ({ iconDefinition }: { iconDefinition: string 
   // @ts-ignore
   const imageUrl = output.at(0)
 
-  const icon = await removeBackground({ imageUrl })
+  const icon = await removeBackground({ imageUrl, apiKey })
   return String(icon)
 }
 
-const removeBackground = async ({ imageUrl }: { imageUrl: string }) => {
+const removeBackground = async ({ imageUrl, apiKey }: { imageUrl: string; apiKey: string }) => {
+  const replicate = new Replicate({
+    auth: apiKey
+  })
+
   const output = await replicate.run(
     'cjwbw/rembg:fb8af171cfa1616ddcf1242c093f9c46bcada5ad4cf6f2fbe8b81b330ec5c003',
     {

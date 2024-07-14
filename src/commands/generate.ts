@@ -7,7 +7,7 @@ import { handleError } from '@/utils/handleError.js'
 import { SEO_GENERATOR, SEO_GENERATOR_HTML } from '@/utils/seoGeneration.js'
 import { logger } from '@/utils/logger.js'
 import { getConf, getKey, Providers } from '@/utils/conf.js'
-import { generateGlobalSEO, generateHTMLTags } from '@/utils/ai.js'
+import { generateGlobalSEO, generateHTMLTags, generateIcons } from '@/utils/ai.js'
 
 const generateSchema = z.object({
   tags: z.array(z.string()).optional(),
@@ -57,6 +57,7 @@ export const generate = new Command()
           message: `Which SEO items do you want to generate for your project?`,
           options: [
             { value: 'core', label: 'Include core SEO tags', hint: 'recommended' },
+            { value: 'icons', label: 'Icons', hint: 'recommended' },
             { value: 'applicationName', label: 'Application Name' },
             { value: 'metadataBase', label: 'URL prefix for metadata fields' },
             { value: 'authors', label: 'Authors' },
@@ -101,13 +102,30 @@ export const generate = new Command()
         process.exit(0)
       }
 
-      const s = spinner()
-      s.start('Generating SEO data...')
-
-      let SEO_METADATA = {}
-      let HTML_METATAGS = ''
-
       if (seoTags) {
+        let replicateKey: string | symbol = ''
+        if (seoTags.includes('icons')) {
+          replicateKey = await text({
+            message: 'For generating icons, enter your Replicate API Key',
+            placeholder: 'r5_0398114l4312165232',
+            validate(value) {
+              const descriptionLength = value.trim().length
+              if (descriptionLength === 0) return `Replicate API Key is required!`
+            }
+          })
+
+          if (isCancel(replicateKey)) {
+            cancel('Operation cancelled.')
+            process.exit(0)
+          }
+        }
+
+        const s = spinner()
+        s.start('Generating SEO data...')
+
+        let SEO_METADATA = {}
+        let HTML_METATAGS = ''
+
         for (const seoTag of seoTags) {
           // Generate core SEO tags using AI
           if (seoTag === 'core') {
@@ -115,6 +133,22 @@ export const generate = new Command()
               SEO_METADATA = await generateGlobalSEO({ description, model })
             } else {
               HTML_METATAGS = await generateHTMLTags({ description, model })
+            }
+          } else if (seoTag === 'icons') {
+            const icons = await generateIcons({
+              description,
+              metadata: opts.metadata,
+              model,
+              apiKey: replicateKey
+            })
+
+            if (opts.metadata) {
+              SEO_METADATA = {
+                ...SEO_METADATA,
+                icons
+              }
+            } else {
+              HTML_METATAGS = HTML_METATAGS.concat(icons as string)
             }
           } else {
             if (opts.metadata) {
@@ -148,13 +182,12 @@ export const generate = new Command()
             }
           }
         }
+
+        s.stop('SEO generated 🚀!')
+        outro(`Here's your SEO metadata:`)
+        logger.break()
+        logger.info(opts.metadata ? JSON.stringify(SEO_METADATA, null, 2) : HTML_METATAGS)
       }
-
-      s.stop('SEO generated 🚀!')
-
-      outro(`You're all set!`)
-      logger.break()
-      logger.info(opts.metadata ? JSON.stringify(SEO_METADATA, null, 2) : HTML_METATAGS)
     } catch (error) {
       handleError(error)
     }
