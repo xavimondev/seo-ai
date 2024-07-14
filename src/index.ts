@@ -1,13 +1,10 @@
 #!/usr/bin/env node
 import { Command } from 'commander'
-import dotenv from 'dotenv'
 import { intro } from '@clack/prompts'
 import chalk from 'chalk'
 import { getPackageJson } from '@/utils/getPackageJson.js'
 import { generate } from '@/commands/generate.js'
 import { config } from '@/commands/config.js'
-
-dotenv.config()
 
 process.on('SIGINT', () => process.exit(0))
 process.on('SIGTERM', () => process.exit(0))
