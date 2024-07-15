@@ -109,3 +109,65 @@ export const generateIcons = async ({
   }
   return `<link rel="icon" href="https://example.com/seo/icons/icon.png" />\n<link rel="apple-touch-icon" href="https://example.com/seo/icons/icon.png" />\n`
 }
+
+export const generateKeyProjectFiles = async ({
+  files,
+  model
+}: {
+  files: string
+  model: LanguageModel
+}) => {
+  const result = await generateObject({
+    model,
+    schema: z.object({ paths: z.array(z.string()) }),
+    prompt: `You are a codebase analysis assistant. Please analyze the list of directories and files provided and identify the 15 most important files that are essential for understanding the core functionalities,and key features of the project.
+    Here is the list of directories and files:
+    ${files}`
+  })
+
+  return result.object.paths
+}
+
+export const generateFileSummary = async ({
+  filePath,
+  fileContents,
+  model
+}: {
+  filePath: string
+  fileContents: string
+  model: LanguageModel
+}) => {
+  const { text } = await generateText({
+    model,
+    prompt: `Create a concise summary that captures the primary purpose and key features of this file.
+    Emphasize the functionality and objectives of the code, avoiding technical implementation specifics. Reference the following codebase details while generating the summary:
+    - File path: ${filePath}
+    - File contents: ${fileContents}
+    
+    Additional requirements:
+    - Avoid starting with 'This file', 'The file', or 'This code', etc. and don't include the file path or name in the summary.
+    - Exclude quotes, code snippets, or bullet points from your response.Your response should be a maximum of 30 words.`
+  })
+
+  return text
+}
+
+export const generateProjectOverview = async ({
+  model,
+  codeSummary
+}: {
+  model: LanguageModel
+  codeSummary: string
+}) => {
+  const { text } = await generateText({
+    model,
+    prompt: `Craft an overview that highlights the key functionalities, purpose, and value proposition of the project.
+    While generating the project summary, please reference the following codebase details:
+    ${codeSummary}
+
+    Exclude quotes, code snippets, or bullet points from your response. Avoid deep technical details and focus on the project's high-level use cases and features.
+    Your response should be a maximum of 40 words.`
+  })
+
+  return text
+}
