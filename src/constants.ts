@@ -157,3 +157,24 @@ export const FILES_TO_IGNORE = [
   'next-env.d.ts',
   'postcss.config.js'
 ]
+
+export const OPTIONS_TAGS = [
+  { value: 'core', label: 'Core SEO tags', hint: 'recommended' },
+  { value: 'icons', label: 'Icons', hint: 'recommended' },
+  { value: 'applicationName', label: 'Application Name' },
+  { value: 'metadataBase', label: 'URL prefix for metadata fields' },
+  { value: 'authors', label: 'Authors' },
+  { value: 'creator', label: 'Creator' },
+  { value: 'publisher', label: 'Publisher' },
+  { value: 'classification', label: 'Classification' },
+  { value: 'bookmarks', label: 'Bookmarks' },
+  { value: 'assets', label: 'Assets' },
+  { value: 'archives', label: 'Archives' },
+  { value: 'referrer', label: 'Referrer' },
+  { value: 'alternates', label: 'Canonical URL' },
+  { value: 'formatDetection', label: 'Format Detection' },
+  { value: 'manifest', label: 'Manifest' },
+  { value: 'verification', label: 'Verification' },
+  { value: 'viewport', label: 'Colors' }, // https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+  { value: 'generator', label: 'Generator used' }
+]
