@@ -166,7 +166,7 @@ export const generateProjectOverview = async ({
     ${codeSummary}
 
     Exclude quotes, code snippets, or bullet points from your response. Avoid deep technical details and focus on the project's high-level use cases and features.
-    Your response should be a maximum of 40 words.`
+    Your response should be a maximum of 30 words.`
   })
 
   return text
