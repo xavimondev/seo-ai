@@ -90,6 +90,9 @@ export const FILES_TO_IGNORE = [
   '.env',
   '.env.example',
   '.env.local',
+  '.env.development.local',
+  '.env.test.local',
+  '.env.production.local',
   '.babelrc',
   '.dvcignore',
   '.flake8',
@@ -155,7 +158,8 @@ export const FILES_TO_IGNORE = [
   'tsup.config.ts',
   '.turbo',
   'next-env.d.ts',
-  'postcss.config.js'
+  'postcss.config.js',
+  'coverage'
 ]
 
 export const OPTIONS_TAGS = [
