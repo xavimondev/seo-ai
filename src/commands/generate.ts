@@ -6,6 +6,7 @@ import { createOpenAI } from '@ai-sdk/openai'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { setTimeout } from 'node:timers/promises'
+import { existsSync } from 'node:fs'
 import { handleError } from '@/utils/handleError.js'
 import { SEO_GENERATOR, SEO_GENERATOR_HTML } from '@/utils/seoGeneration.js'
 import { logger } from '@/utils/logger.js'
@@ -31,11 +32,18 @@ export const generate = new Command()
   .name('generate')
   .argument('[tags...]', 'metatag property')
   .description('Generate object metadata or HTML metatags')
-  .option('-m, --metadata', 'generate JSON metadata', false)
   .option('-h, --html', 'generate HTML metatags', false)
   .action(async (tags, opts) => {
     const options = generateSchema.parse({ tags, ...opts })
     let seoTags = options.tags
+    let isMetadata = false
+
+    // checking if it's a nextjs project, so let's build a metadata object
+    const pwd = path.resolve(process.cwd())
+    const nextFile = path.join(pwd, 'next.config.js')
+    if (existsSync(nextFile) && !opts.html) {
+      isMetadata = true
+    }
 
     const lastProvider = Object.keys(getConf()).at(-1)
     if (!lastProvider) {
@@ -68,7 +76,7 @@ export const generate = new Command()
         const aditionalSeoTags = await multiselect({
           message: `Which SEO items do you want to generate for your project?`,
           options: [
-            { value: 'core', label: 'Include core SEO tags', hint: 'recommended' },
+            { value: 'core', label: 'Core SEO tags', hint: 'recommended' },
             { value: 'icons', label: 'Icons', hint: 'recommended' },
             { value: 'applicationName', label: 'Application Name' },
             { value: 'metadataBase', label: 'URL prefix for metadata fields' },
@@ -147,7 +155,7 @@ export const generate = new Command()
           } else {
             SUGGESTED_PATHS.push(...files)
           }
-          setTimeout(2000)
+          await setTimeout(2000)
           s.stop('Scanning has ended')
 
           // Formatting the results and reading the files, then generating a summary for each file
@@ -240,7 +248,7 @@ export const generate = new Command()
       for (const seoTag of seoTags) {
         // Generate core SEO tags using AI
         if (seoTag === 'core') {
-          if (opts.metadata) {
+          if (isMetadata) {
             SEO_METADATA = await generateGlobalSEO({ description: PROJECT_OVERVIEW, model })
           } else {
             HTML_METATAGS = await generateHTMLTags({ description: PROJECT_OVERVIEW, model })
@@ -248,11 +256,11 @@ export const generate = new Command()
         } else if (seoTag === 'icons') {
           const icons = await generateIcons({
             description: PROJECT_OVERVIEW,
-            metadata: opts.metadata,
+            metadata: isMetadata,
             model,
             apiKey: replicateKey
           })
-          if (opts.metadata) {
+          if (isMetadata) {
             SEO_METADATA = {
               ...SEO_METADATA,
               icons
@@ -261,7 +269,7 @@ export const generate = new Command()
             HTML_METATAGS = HTML_METATAGS.concat(icons as string)
           }
         } else {
-          if (opts.metadata) {
+          if (isMetadata) {
             const getTagContent = SEO_GENERATOR[seoTag]
             SEO_METADATA = {
               ...SEO_METADATA,
@@ -274,7 +282,7 @@ export const generate = new Command()
         }
       }
       // @ts-ignore
-      if (opts.metadata && SEO_METADATA.openGraph && SEO_METADATA.twitter) {
+      if (isMetadata && SEO_METADATA.openGraph && SEO_METADATA.twitter) {
         // TODO: improve this, looks weird
         SEO_METADATA = {
           ...SEO_METADATA,
@@ -292,9 +300,9 @@ export const generate = new Command()
       }
 
       s.stop('SEO generated 🚀!')
-      outro(`Here's your SEO metadata:`)
+      outro(`Here's your SEO ${isMetadata ? 'metadata' : 'HTML metatags'}:`)
       logger.break()
-      logger.info(opts.metadata ? JSON.stringify(SEO_METADATA, null, 2) : HTML_METATAGS)
+      logger.info(isMetadata ? JSON.stringify(SEO_METADATA, null, 2) : HTML_METATAGS)
     } catch (error) {
       handleError(error)
     }
