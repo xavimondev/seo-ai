@@ -1,9 +1,15 @@
 {
   "name": "seo-ai",
   "version": "0.0.1",
-  "description": "Generate seo data for your website",
+  "description": "Command-line tool to generate SEO metadata and HTML meta tags using AI models",
   "type": "module",
   "license": "MIT",
+  "keywords": [
+    "Supabase",
+    "SQL",
+    "Database",
+    "Migrations"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/xavimondev/seo-ai.git"
@@ -15,22 +21,21 @@
     "dev": "tsup --watch",
     "build": "tsup",
     "lint": "tsc --noEmit",
-    "start": "node dist/index.js"
+    "start": "node dist/index.js",
+    "clean": "rimraf dist"
   },
-  "keywords": [],
   "author": {
     "name": "Xavi Alfaro",
     "url": "https://x.com/xavimonp"
   },
   "devDependencies": {
+    "@changesets/cli": "2.27.7",
     "@types/node": "20.14.10",
     "prettier": "3.3.2",
+    "rimraf": "6.0.1",
     "tsup": "8.1.0",
     "type-fest": "4.21.0",
     "typescript": "5.5.3"
-  },
-  "engines": {
-    "node": ">=18"
   },
   "dependencies": {
     "@ai-sdk/mistral": "0.0.22",
@@ -43,5 +48,8 @@
     "ora": "8.0.1",
     "replicate": "0.31.1",
     "zod": "3.23.8"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
