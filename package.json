@@ -4,9 +4,6 @@
   "description": "Command-line tool to generate SEO metadata and HTML meta tags using AI models",
   "type": "module",
   "license": "MIT",
-  "publishConfig": {
-    "access": "public"
-  },
   "keywords": [
     "ai",
     "seo",
