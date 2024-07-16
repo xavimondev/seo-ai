@@ -35,6 +35,9 @@ npx seo-ai config set MISTRAL_API_KEY=<your-key>
 
 ### Usage
 
+> [!NOTE]  
+> When running the CLI in a Next.js project, it will create a medatata object according to the [Next.js docs](https://nextjs.org/docs/app/building-your-application/optimizing/metadata), if you still want to generate HTML meta tags, use the `--html` or `-h` option.
+
 ```sh
 npx seo-ai generate 
 
@@ -48,15 +51,13 @@ Options:
 npx seo-ai generate core icons creator
 ```
 
-> [!NOTE]  
-> When running the CLI in a Next.js project, it will create a medatata object, according to the [Next.js documentation](https://nextjs.org/docs/app/building-your-application/optimizing/metadata), if you still want to generate HTML metatags, use the `--html` or `-h` option.
 
 ### Available Tags
   
 | Command           | Description                                                                                          |
 |-------------------|------------------------------------------------------------------------------------                  |
 | `core`            | Generate meta tags: `title`, `description`, `keywords`, `openGraph`, `twitter`, `robots`, `category` |
-| `icons`           | Define icon-related meta tags                           |
+| `icons`           | Define icon meta tags. It uses Replicate. See [Generate icons](#generate-icons)                      |
 | `applicationName` | Specify the name of the web application                                                              |
 | `metadataBase`    | Set the base URL for metadata relative paths                                                         |
 | `authors`         | List authors of the content                                                                          |
@@ -73,6 +74,10 @@ npx seo-ai generate core icons creator
 | `verification`    | The common verification tokens for the document                                                      |
 | `viewport`        | The viewport setting for the document                                                                |
 | `generator`       | The generator used for the document                                                                  |
+
+### Generate icons
+
+To generate icons, you'll be prompted for a Replicate Token. You can find it here: [Replicate](https://replicate.com/account/api-tokens).
 
 ### API Keys
 
