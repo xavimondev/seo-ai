@@ -122,3 +122,5 @@ pnpm dev
 </a>
 
 ## License
+
+[**MIT**](https://github.com/xavimondev/seo-ai/blob/main/LICENSE).
