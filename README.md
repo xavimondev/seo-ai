@@ -57,7 +57,7 @@ npx seo-ai generate core icons creator
 | Command           | Description                                                                                          |
 |-------------------|------------------------------------------------------------------------------------                  |
 | `core`            | Generate meta tags: `title`, `description`, `keywords`, `openGraph`, `twitter`, `robots`, `category` |
-| `icons`           | Define icon meta tags. It uses Replicate. See [Generate icons](#generate-icons)                      |
+| `icons`           | Define icon meta tags. You'll be prompted for a Replicate Token. You can find it here: [Replicate](https://replicate.com/account/api-tokens)                     |
 | `applicationName` | Specify the name of the web application                                                              |
 | `metadataBase`    | Set the base URL for metadata relative paths                                                         |
 | `authors`         | List authors of the content                                                                          |
@@ -74,10 +74,6 @@ npx seo-ai generate core icons creator
 | `verification`    | The common verification tokens for the document                                                      |
 | `viewport`        | The viewport setting for the document                                                                |
 | `generator`       | The generator used for the document                                                                  |
-
-### Generate icons
-
-To generate icons, you'll be prompted for a Replicate Token. You can find it here: [Replicate](https://replicate.com/account/api-tokens).
 
 ### API Keys
 
