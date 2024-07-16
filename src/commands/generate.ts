@@ -1,6 +1,7 @@
 import { Command } from 'commander'
-import { cancel, outro, text, spinner, multiselect, isCancel } from '@clack/prompts'
+import { cancel, text, spinner, multiselect, isCancel } from '@clack/prompts'
 import { z } from 'zod'
+import { type LanguageModel } from 'ai'
 import { createMistral } from '@ai-sdk/mistral'
 import { createOpenAI } from '@ai-sdk/openai'
 import fs from 'node:fs/promises'
@@ -35,13 +36,14 @@ export const generate = new Command()
   .option('-h, --html', 'generate HTML metatags', false)
   .action(async (tags, opts) => {
     const options = generateSchema.parse({ tags, ...opts })
-    let seoTags = options.tags
+    let seoTags = options.tags ?? []
     let isMetadata = false
 
     // checking if it's a nextjs project, so let's build a metadata object
     const pwd = path.resolve(process.cwd())
-    const nextFile = path.join(pwd, 'next.config.js')
-    if (existsSync(nextFile) && !opts.html) {
+    const nextMjsFile = path.join(pwd, 'next.config.mjs')
+    const nextJsFile = path.join(pwd, 'next.config.js')
+    if ((existsSync(nextMjsFile) || existsSync(nextJsFile)) && !opts.html) {
       isMetadata = true
     }
 
@@ -52,30 +54,15 @@ export const generate = new Command()
       process.exit(0)
     }
 
-    const apiKey = getKey({ provider: lastProvider as Providers }) as string
-    // AI Providers
-    let model = undefined
-    if (lastProvider === 'mistral') {
-      const mistral = createMistral({
-        apiKey
-      })
-      model = mistral('mistral-large-latest')
-    } else if (lastProvider === 'openai') {
-      const openai = createOpenAI({
-        apiKey,
-        compatibility: 'strict'
-      })
-      model = openai('gpt-3.5-turbo')
-    } else {
-      logger.error('Invalid provider')
-      process.exit(0)
-    }
-
     try {
+      const optionsSelect = !isMetadata
+        ? OPTIONS_TAGS
+        : OPTIONS_TAGS.concat({ value: 'metadataBase', label: 'URL prefix for metadata fields' })
+
       if (!options.tags?.length) {
         const aditionalSeoTags = await multiselect({
           message: `Which SEO items do you want to generate for your project?`,
-          options: OPTIONS_TAGS,
+          options: optionsSelect,
           initialValues: ['core'],
           required: true
         })
@@ -86,123 +73,144 @@ export const generate = new Command()
         seoTags = aditionalSeoTags as string[]
       }
 
+      // AI
       let PROJECT_OVERVIEW = ''
+      let model: LanguageModel | undefined = undefined
 
-      const cmdGitStatus = 'git status'
-      const gitStatus = await execa({ cmd: cmdGitStatus })
-
-      if (gitStatus.includes('fatal')) {
-        // It's not a git repository, so display a prompt to enter a description
-        const description = await text({
-          message: 'Enter a brief description of your project',
-          placeholder: 'page to generate readmes using ai',
-          validate(value) {
-            const descriptionLength = value.trim().length
-            if (descriptionLength === 0) return `Description is required!`
-            if (descriptionLength < 10) return `Description must be at least 10 characters!`
-          }
-        })
-        if (isCancel(description)) {
-          cancel('Operation cancelled.')
+      if (seoTags.includes('icons') || seoTags.includes('core')) {
+        const apiKey = getKey({ provider: lastProvider as Providers }) as string
+        if (lastProvider === 'mistral') {
+          const mistral = createMistral({
+            apiKey
+          })
+          model = mistral('mistral-large-latest')
+        } else if (lastProvider === 'openai') {
+          const openai = createOpenAI({
+            apiKey,
+            compatibility: 'strict'
+          })
+          model = openai('gpt-3.5-turbo')
+        } else {
+          logger.error('Invalid provider')
           process.exit(0)
         }
 
-        PROJECT_OVERVIEW = description
-      } else {
-        const cmdGitTree = 'git ls-tree -r HEAD --name-only'
-        const gitTree = await execa({ cmd: cmdGitTree })
-
-        // Filtering files that are not in the ignore list
-        if (gitTree !== '') {
-          const s = spinner()
-          s.start('Scanning project files...')
-          const files = gitTree
-            .split('\n')
-            .filter(
-              (file) =>
-                !DIRECTORIES_TO_IGNORE.includes(file) &&
-                !FILES_TO_IGNORE.includes(file) &&
-                file !== ''
-            )
-
-          // Asking LLM to generate a list of files that are essential for the project.
-          const SUGGESTED_PATHS: string[] = []
-          if (files.length > 15) {
-            const projectKeyFiles = await generateKeyProjectFiles({
-              files: files.join('\n'),
-              model
-            })
-            SUGGESTED_PATHS.push(...projectKeyFiles)
-          } else {
-            SUGGESTED_PATHS.push(...files)
-          }
-          await setTimeout(2000)
-          s.stop('Scanning has ended')
-
-          // Formatting the results and reading the files, then generating a summary for each file
-          s.start('Generating a summary for each file...')
-          const promises = SUGGESTED_PATHS.map(async (file) => {
-            const cwd = path.resolve(process.cwd())
-            const pathfile = path.join(cwd, file)
-
-            const content = await fs.readFile(pathfile, { encoding: 'utf8' })
-            return {
-              path: file,
-              content
+        const cmdGitStatus = 'git status'
+        const gitStatus = await execa({ cmd: cmdGitStatus })
+        if (gitStatus.includes('fatal')) {
+          // It's not a git repository, so display a prompt to enter a description
+          const description = await text({
+            message: 'Enter a brief description of your project',
+            placeholder: 'page to generate readmes using ai',
+            validate(value) {
+              const descriptionLength = value.trim().length
+              if (descriptionLength === 0) return `Description is required!`
+              if (descriptionLength < 10) return `Description must be at least 10 characters!`
             }
           })
+          if (isCancel(description)) {
+            cancel('Operation cancelled.')
+            process.exit(0)
+          }
 
-          const results = await Promise.allSettled(promises)
-          const listSummary = results.map(async (result) => {
-            // @ts-ignore
-            const { status, value } = result
-            if (status === 'fulfilled') {
-              const { path, content } = value
-              const fileSummary = await generateFileSummary({
-                filePath: path,
-                fileContents: content,
+          PROJECT_OVERVIEW = description
+        } else {
+          const cmdGitTree = 'git ls-tree -r HEAD --name-only'
+          const gitTree = await execa({ cmd: cmdGitTree })
+
+          // Filtering files that are not in the ignore list
+          if (gitTree !== '') {
+            const s = spinner()
+            s.start('Scanning project files...')
+            const files = gitTree
+              .split('\n')
+              .filter(
+                (file) =>
+                  !DIRECTORIES_TO_IGNORE.includes(file) &&
+                  !FILES_TO_IGNORE.includes(file) &&
+                  file !== ''
+              )
+
+            // Asking LLM to generate a list of files that are essential for the project.
+            const SUGGESTED_PATHS: string[] = []
+            if (files.length > 15) {
+              const projectKeyFiles = await generateKeyProjectFiles({
+                files: files.join('\n'),
                 model
               })
+              SUGGESTED_PATHS.push(...projectKeyFiles)
+            } else {
+              SUGGESTED_PATHS.push(...files)
+            }
+            await setTimeout(2000)
+            s.stop('Scanning has ended')
+
+            // Formatting the results and reading the files, then generating a summary for each file
+            s.start('Generating a summary for each file...')
+            const promises = SUGGESTED_PATHS.map(async (file) => {
+              const cwd = path.resolve(process.cwd())
+              const pathfile = path.join(cwd, file)
+
+              const content = await fs.readFile(pathfile, { encoding: 'utf8' })
               return {
-                path,
-                summary: fileSummary
+                path: file,
+                content
               }
-            }
-            return null
-          })
-          const listSummaries = await Promise.allSettled(listSummary)
+            })
 
-          s.stop('Summary has been generated')
+            const results = await Promise.allSettled(promises)
 
-          // Formatting code summary and generating project overview
-          s.start('Generating project overview...')
-          let codeSummary = ''
-          listSummaries.forEach((result) => {
-            // @ts-ignore
-            const { status, value } = result
-            if (status === 'fulfilled' && value) {
-              const { path, summary } = value
-              codeSummary += `Path: ${path}\nSummary: ${summary}\n\n`
-            }
-          })
+            const listSummary = results.map(async (result) => {
+              // @ts-ignore
+              const { status, value } = result
+              if (status === 'fulfilled' && model) {
+                const { path, content } = value
+                const fileSummary = await generateFileSummary({
+                  filePath: path,
+                  fileContents: content,
+                  model
+                })
+                return {
+                  path,
+                  summary: fileSummary
+                }
+              }
+              return null
+            })
+            const listSummaries = await Promise.allSettled(listSummary)
 
-          const overview = await generateProjectOverview({
-            model,
-            codeSummary
-          })
+            s.stop('Summary has been generated')
 
-          PROJECT_OVERVIEW = overview
+            // Formatting code summary and generating project overview
+            s.start('Generating project overview...')
+            let codeSummary = ''
+            listSummaries.forEach((result) => {
+              // @ts-ignore
+              const { status, value } = result
+              if (status === 'fulfilled' && value) {
+                const { path, summary } = value
+                codeSummary += `Path: ${path}\nSummary: ${summary}\n\n`
+              }
+            })
 
-          s.stop('Overview has been generated')
-        } else {
-          logger.warn('Your directory has no files to generate a summary for.')
+            const overview = await generateProjectOverview({
+              model,
+              codeSummary
+            })
+
+            PROJECT_OVERVIEW = overview
+
+            s.stop('Overview has been generated')
+          } else {
+            logger.warn('Your directory has no files to generate a summary for.')
+            process.exit(0)
+          }
+        }
+
+        if (!PROJECT_OVERVIEW) {
+          logger.warn('You need to provide the description')
           process.exit(0)
         }
-      }
-
-      if (!seoTags || !PROJECT_OVERVIEW) {
-        logger.warn('You need to provide at least one SEO tag and a description')
-        process.exit(0)
       }
 
       let replicateKey: string | symbol = ''
@@ -228,13 +236,13 @@ export const generate = new Command()
       let HTML_METATAGS = ''
       for (const seoTag of seoTags) {
         // Generate core SEO tags using AI
-        if (seoTag === 'core') {
+        if (seoTag === 'core' && model) {
           if (isMetadata) {
             SEO_METADATA = await generateGlobalSEO({ description: PROJECT_OVERVIEW, model })
           } else {
             HTML_METATAGS = await generateHTMLTags({ description: PROJECT_OVERVIEW, model })
           }
-        } else if (seoTag === 'icons') {
+        } else if (seoTag === 'icons' && model) {
           const icons = await generateIcons({
             description: PROJECT_OVERVIEW,
             metadata: isMetadata,
@@ -281,9 +289,30 @@ export const generate = new Command()
       }
 
       s.stop('SEO generated 🚀!')
-      outro(`Here's your SEO ${isMetadata ? 'metadata' : 'HTML metatags'}:`)
       logger.break()
-      logger.info(isMetadata ? JSON.stringify(SEO_METADATA, null, 2) : HTML_METATAGS)
+
+      if (!isMetadata) {
+        logger.success(`HTML metatags:`)
+        logger.break()
+        logger.info(HTML_METATAGS)
+        return
+      }
+
+      // @ts-ignore
+      const { viewport, ...metadata } = SEO_METADATA
+      if (Object.keys(metadata).length > 0) {
+        logger.success(`Here's the metadata object:`)
+        logger.break()
+        logger.info(`const metadata: Metadata = ${JSON.stringify(metadata, null, 1)}`)
+        logger.break()
+      }
+
+      // https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+      if (viewport) {
+        logger.success(`Here's the viewport object:`)
+        logger.break()
+        logger.info(`const viewport: Viewport = ${JSON.stringify(viewport, null, 1)}`)
+      }
     } catch (error) {
       handleError(error)
     }

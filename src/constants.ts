@@ -42,8 +42,6 @@ export const SEO_TAGS = [
   'category'
 ]
 
-export const SEO_ITEMS_WITHOUT_AI = ['applicationName', 'authors', 'creator', 'publisher', 'icons']
-
 export const DIRECTORIES_TO_IGNORE = [
   'node_modules',
   '.git',
@@ -166,7 +164,6 @@ export const OPTIONS_TAGS = [
   { value: 'core', label: 'Core SEO tags', hint: 'recommended' },
   { value: 'icons', label: 'Icons', hint: 'recommended' },
   { value: 'applicationName', label: 'Application Name' },
-  { value: 'metadataBase', label: 'URL prefix for metadata fields' },
   { value: 'authors', label: 'Authors' },
   { value: 'creator', label: 'Creator' },
   { value: 'publisher', label: 'Publisher' },
@@ -179,6 +176,6 @@ export const OPTIONS_TAGS = [
   { value: 'formatDetection', label: 'Format Detection' },
   { value: 'manifest', label: 'Manifest' },
   { value: 'verification', label: 'Verification' },
-  { value: 'viewport', label: 'Colors' }, // https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+  { value: 'viewport', label: 'Colors' },
   { value: 'generator', label: 'Generator used' }
 ]
