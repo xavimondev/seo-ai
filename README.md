@@ -11,7 +11,7 @@
 - Node >= 18
 - pnpm > 8
 
-## Setup
+## Usage
 
 You can use one of the following AI providers to generate SEO data:
 
@@ -33,33 +33,67 @@ npx seo-ai config set OPENAI_API_KEY=<your-key>
 npx seo-ai config set MISTRAL_API_KEY=<your-key>
 ```
 
-### Usage
+### Run
+
+```sh
+npx seo-ai generate
+```
+
+### CLI
 
 > [!NOTE]  
 > When running the CLI in a Next.js project, it will create a medatata object according to the [Next.js docs](https://nextjs.org/docs/app/building-your-application/optimizing/metadata), if you still want to generate HTML meta tags, use the `--html` or `-h` option.
 
 ```sh
-npx seo-ai generate 
-
-Arguments:
-[tags]       metatag property - optional
+npx seo-ai [options] [command]
 
 Options:
--h, --html   generate SEO in HTML meta tags
+-v, --version                 Outputs the seo-ai version.  
 
-## Generating specific SEO tags or metadata
+Commands:
+generate [tags] [options]     Generates an object metadata or HTML meta tags
+config [arguments]            Sets API Keys configuration
+```
+
+#### Generate
+
+```sh
+npx seo-ai generate [tags] [options]
+
+Arguments:
+[tags]       SEO tags to be generated. See [Available Tags](#available-tags)
+
+Options:
+-h, --html   Generates HTML meta tags
+
+## Example:
 npx seo-ai generate core icons creator
 ```
 
+#### Config
 
-### Available Tags
+```sh
+npx seo-ai config [arguments]
+
+Arguments:
+set [arguments]    Sets an API Key. Available providers: OPENAI_API_KEY and MISTRAL_API_KEY
+get [arguments]    Retrieves an API Key using `mistral` or `openai`
+clear              Clears all API Keys
+
+# Example:
+npx seo-ai config set OPENAI_API_KEY=<your-key>
+npx seo-ai config get openai
+npx seo-ai config clear
+```
+
+## Available Tags
   
 | Command           | Description                                                                                          |
 |-------------------|------------------------------------------------------------------------------------                  |
 | `core`            | Generate meta tags: `title`, `description`, `keywords`, `openGraph`, `twitter`, `robots`, `category` |
 | `icons`           | Define icon meta tags. You'll be prompted for a Replicate Token. You can find it here: [Replicate](https://replicate.com/account/api-tokens)                     |
 | `applicationName` | Specify the name of the web application                                                              |
-| `metadataBase`    | Set the base URL for metadata relative paths                                                         |
+| `metadataBase`    | Set the base URL for metadata relative paths. Available only for Next.js projects                    |
 | `authors`         | List authors of the content                                                                          |
 | `creator`         | Identify the creator of the content                                                                  |
 | `publisher`       | Specify the publisher of the content                                                                 |
@@ -74,18 +108,6 @@ npx seo-ai generate core icons creator
 | `verification`    | The common verification tokens for the document                                                      |
 | `viewport`        | The viewport setting for the document                                                                |
 | `generator`       | The generator used for the document                                                                  |
-
-### API Keys
-
-```sh
-# Get an API key:
-npx seo-ai config get mistral
-# or
-npx seo-ai config get openai
-
-# Clear all keys:
-npx seo-ai config clear
-```
 
 ## Stack
 
