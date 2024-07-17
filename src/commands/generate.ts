@@ -76,6 +76,7 @@ export const generate = new Command()
       // AI
       let PROJECT_OVERVIEW = ''
       let model: LanguageModel | undefined = undefined
+      let replicateKey: string | symbol = ''
 
       if (seoTags.includes('icons') || seoTags.includes('core')) {
         const apiKey = getKey({ provider: lastProvider as Providers }) as string
@@ -95,9 +96,10 @@ export const generate = new Command()
           process.exit(0)
         }
 
-        const cmdGitStatus = 'git status'
-        const gitStatus = await execa({ cmd: cmdGitStatus })
-        if (gitStatus.includes('fatal')) {
+        const listFiles = await fs.readdir('.')
+        const isGitInitialized = listFiles.includes('.git')
+
+        if (!isGitInitialized) {
           // It's not a git repository, so display a prompt to enter a description
           const description = await text({
             message: 'Enter a brief description of your project',
@@ -120,6 +122,21 @@ export const generate = new Command()
 
           // Filtering files that are not in the ignore list
           if (gitTree !== '') {
+            if (seoTags.includes('icons')) {
+              replicateKey = await text({
+                message: 'For generating icons, enter your Replicate API Key',
+                placeholder: 'r5_0398114l4312165232',
+                validate(value) {
+                  const descriptionLength = value.trim().length
+                  if (descriptionLength === 0) return `Replicate API Key is required!`
+                }
+              })
+              if (isCancel(replicateKey)) {
+                cancel('Operation cancelled.')
+                process.exit(0)
+              }
+            }
+
             const s = spinner()
             s.start('Scanning project files...')
             const files = gitTree
@@ -213,30 +230,20 @@ export const generate = new Command()
         }
       }
 
-      let replicateKey: string | symbol = ''
-      if (seoTags.includes('icons')) {
-        replicateKey = await text({
-          message: 'For generating icons, enter your Replicate API Key',
-          placeholder: 'r5_0398114l4312165232',
-          validate(value) {
-            const descriptionLength = value.trim().length
-            if (descriptionLength === 0) return `Replicate API Key is required!`
-          }
-        })
-        if (isCancel(replicateKey)) {
-          cancel('Operation cancelled.')
-          process.exit(0)
-        }
-      }
-
       const s = spinner()
       s.start('Generating SEO data...')
 
       let SEO_METADATA = {}
       let HTML_METATAGS = ''
       for (const seoTag of seoTags) {
-        // Generate core SEO tags using AI
+        const isValidTag = OPTIONS_TAGS.find((tag) => tag.value === seoTag)
+        if (!isValidTag) {
+          logger.warn(`Invalid tag: ${seoTag}`)
+          continue
+        }
+
         if (seoTag === 'core' && model) {
+          // Generate core SEO tags using AI
           if (isMetadata) {
             SEO_METADATA = await generateGlobalSEO({ description: PROJECT_OVERVIEW, model })
           } else {

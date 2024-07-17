@@ -71,15 +71,18 @@ export const DIRECTORIES_TO_IGNORE = [
   'output',
   'out',
   '.next',
+  '.nuxt',
   'build',
   'tmp',
   '.husky',
   'release',
   '.devcontainer',
   '.changeset',
-  'utils'
+  'utils',
+  '.svelte-kit'
 ]
 
+// I think a regular expression is better here to catch all config files, etc.
 export const FILES_TO_IGNORE = [
   '.editorconfig',
   '.gitignore',
@@ -151,13 +154,17 @@ export const FILES_TO_IGNORE = [
   'vitest.config.ts',
   'turbo.json',
   'next.config.js',
+  'next.config.mjs',
   'tailwind.config.ts',
   'tailwind.config.js',
   'tsup.config.ts',
   '.turbo',
   'next-env.d.ts',
   'postcss.config.js',
-  'coverage'
+  'coverage',
+  'nuxt.config.ts',
+  'svelte.config.js',
+  'vite.config.ts'
 ]
 
 export const OPTIONS_TAGS = [

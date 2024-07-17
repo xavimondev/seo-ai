@@ -1,5 +1,11 @@
 # seo-ai
 
+## 0.1.2
+
+### Patch Changes
+
+- fix errors
+
 ## 0.1.1
 
 ### Patch Changes
