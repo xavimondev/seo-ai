@@ -1,5 +1,5 @@
 import { Command } from 'commander'
-import { cancel, text, spinner, multiselect, isCancel } from '@clack/prompts'
+import { cancel, text, spinner, multiselect, isCancel, outro } from '@clack/prompts'
 import { z } from 'zod'
 import { type LanguageModel } from 'ai'
 import { createMistral } from '@ai-sdk/mistral'
@@ -7,7 +7,7 @@ import { createOpenAI } from '@ai-sdk/openai'
 import fs from 'node:fs/promises'
 import path from 'node:path'
 import { setTimeout } from 'node:timers/promises'
-import { existsSync } from 'node:fs'
+import { existsSync, mkdirSync } from 'node:fs'
 import { handleError } from '@/utils/handleError.js'
 import { SEO_GENERATOR, SEO_GENERATOR_HTML } from '@/utils/seoGeneration.js'
 import { logger } from '@/utils/logger.js'
@@ -237,7 +237,7 @@ export const generate = new Command()
       let HTML_METATAGS = ''
       for (const seoTag of seoTags) {
         const isValidTag = OPTIONS_TAGS.find((tag) => tag.value === seoTag)
-        if (!isValidTag) {
+        if (!isValidTag && !isMetadata) {
           logger.warn(`Invalid tag: ${seoTag}`)
           continue
         }
@@ -295,30 +295,54 @@ export const generate = new Command()
         }
       }
 
-      s.stop('SEO generated 🚀!')
-      logger.break()
+      s.stop('SEO generated!')
 
       if (!isMetadata) {
-        logger.success(`HTML metatags:`)
         logger.break()
+        logger.success(`HTML metatags:`)
         logger.info(HTML_METATAGS)
         return
       }
 
-      // @ts-ignore
-      const { viewport, ...metadata } = SEO_METADATA
-      if (Object.keys(metadata).length > 0) {
-        logger.success(`Here's the metadata object:`)
-        logger.break()
-        logger.info(`const metadata: Metadata = ${JSON.stringify(metadata, null, 1)}`)
-        logger.break()
+      // It's a Next.js project, so prompt the user to enter file's path where they want to add the metadata
+      const filePathEntered = await text({
+        message: `Where would you like to add the metadata object?`,
+        placeholder: 'src/app/layout.tsx'
+        // defaultValue: 'src/app/layout.tsx'
+      })
+      if (isCancel(filePathEntered)) {
+        cancel('Operation cancelled.')
+        process.exit(0)
       }
 
+      // @ts-ignore
+      const { viewport, ...metadata } = SEO_METADATA
+      const metadataHasContent = Object.keys(metadata).length > 0
+      const metadataObject = metadataHasContent
+        ? `export const metadata: Metadata = ${JSON.stringify(metadata, null, 2)}`
+        : ''
       // https://nextjs.org/docs/app/api-reference/functions/generate-viewport
-      if (viewport) {
-        logger.success(`Here's the viewport object:`)
-        logger.break()
-        logger.info(`const viewport: Viewport = ${JSON.stringify(viewport, null, 1)}`)
+      const viewportObject = viewport
+        ? `export const viewport: Viewport = ${JSON.stringify(viewport, null, 2)}`
+        : ''
+      const seoObject = `\n${metadataObject}\n${viewportObject}`
+
+      if (!filePathEntered || filePathEntered.trim().length === 0) {
+        outro(`Here's the metadata object:`)
+        logger.success(seoObject)
+      } else {
+        const nextFilePath = path.join(filePathEntered)
+        const dir = path.dirname(nextFilePath)
+        const file = path.basename(nextFilePath)
+
+        if (!existsSync(dir)) {
+          mkdirSync(dir, {
+            recursive: true
+          })
+        }
+
+        await fs.appendFile(path.join(dir, file), seoObject)
+        outro('Metadata object added!')
       }
     } catch (error) {
       handleError(error)

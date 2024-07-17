@@ -1,5 +1,11 @@
 # seo-ai
 
+## 0.2.0
+
+### Minor Changes
+
+- add prompt for a path in which metadata object will be saved
+
 ## 0.1.2
 
 ### Patch Changes
