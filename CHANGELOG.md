@@ -1,5 +1,11 @@
 # seo-ai
 
+## 0.3.0
+
+### Minor Changes
+
+- add favicon stored in app directory when working with nextjs projects
+
 ## 0.2.1
 
 ### Patch Changes

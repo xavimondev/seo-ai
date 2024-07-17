@@ -149,7 +149,7 @@ export const generate = new Command()
 
             // Asking LLM to generate a list of files that are essential for the SEO.
             const SUGGESTED_PATHS: string[] = []
-            if (files.length > 15) {
+            if (files.length > 20) {
               const projectKeyFiles = await generateKeyProjectFiles({
                 files: files.join('\n'),
                 model
@@ -233,7 +233,7 @@ export const generate = new Command()
             apiKey: replicateKey
           })
 
-          if (isMetadata) {
+          if (isMetadata && icons) {
             SEO_METADATA = {
               ...SEO_METADATA,
               icons: icons as Icon
@@ -270,7 +270,7 @@ export const generate = new Command()
         }
       }
 
-      s.stop('SEO generated!')
+      s.stop('SEO generated')
 
       if (!isMetadata) {
         logger.break()
@@ -278,6 +278,8 @@ export const generate = new Command()
         logger.info(HTML_METATAGS)
         return
       }
+
+      if (seoTags.length === 1 && seoTags.at(0) === 'icons') return
 
       // It's a Next.js project, so prompt the user to enter file's path where they want to add the metadata
       const filePathEntered = await text({

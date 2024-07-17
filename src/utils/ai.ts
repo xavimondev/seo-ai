@@ -1,12 +1,10 @@
 import { existsSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
-import { Readable } from 'node:stream'
-import { writeFile } from 'node:fs/promises'
-import { type ReadableStream } from 'node:stream/web'
 import { generateObject, generateText, type LanguageModel } from 'ai'
 import { z } from 'zod'
 import { DEFAULT_SEO_SCHEMA, SEO_TAGS } from '@/constants.js'
 import { generateIcon } from '@/utils/replicate.js'
+import { writeImage } from '@/utils/writeImage.js'
 
 export const generateProjectDescription = async ({
   model,
@@ -119,28 +117,31 @@ export const generateIcons = async ({
     apiKey
   })
 
-  const cwd = path.resolve(process.cwd())
-  const seoDirectory = `public/seo/icons`
-  const publicDirectory = `${cwd}/${seoDirectory}`
-
-  if (!existsSync(publicDirectory)) {
-    mkdirSync(publicDirectory, {
-      recursive: true
-    })
-  }
-
   const response = await fetch(iconUrl)
-  const body = Readable.fromWeb(response.body as ReadableStream<any>)
-  const fileIconPath = path.join(publicDirectory, 'favicon.png')
-  await writeFile(fileIconPath, body)
 
-  if (metadata) {
-    return {
-      icon: '/seo/icons/favicon.png',
-      apple: '/seo/icons/favicon.png'
-    }
+  if (!metadata) {
+    await saveIconDefaultLocation({ response })
+
+    return `<link rel="icon" href="https://example.com/seo/icons/favicon.png" />\n<link rel="apple-touch-icon" href="https://example.com/seo/icons/favicon.png" />\n`
   }
-  return `<link rel="icon" href="https://example.com/seo/icons/icon.png" />\n<link rel="apple-touch-icon" href="https://example.com/seo/icons/icon.png" />\n`
+
+  const appDirectory = path.join('src/app')
+  if (existsSync(appDirectory)) {
+    await writeImage({
+      response,
+      nameFile: 'favicon.png',
+      pathFile: appDirectory
+    })
+
+    return null
+  }
+
+  await saveIconDefaultLocation({ response })
+
+  return {
+    icon: '/seo/icons/favicon.png',
+    apple: '/seo/icons/favicon.png'
+  }
 }
 
 export const generateKeyProjectFiles = async ({
@@ -153,7 +154,7 @@ export const generateKeyProjectFiles = async ({
   const result = await generateObject({
     model,
     schema: z.object({ paths: z.array(z.string()) }),
-    prompt: `You are a codebase analysis expert. Your task is to examine the provided list of directories and files, and identify the 10 most crucial files 
+    prompt: `You are a codebase analysis expert. Your task is to examine the provided list of directories and files, and identify the 20 most crucial files 
 necessary for generating SEO meta tags.
 Here is the list of directories and files:
 ${files}
@@ -162,4 +163,22 @@ Please ensure your selection focuses on the following meta tags: ${SEO_TAGS.join
   })
 
   return result.object.paths
+}
+
+const saveIconDefaultLocation = async ({ response }: { response: Response }) => {
+  const cwd = path.resolve(process.cwd())
+  const seoDirectory = `public/seo/icons`
+  const publicDirectory = `${cwd}/${seoDirectory}`
+
+  if (!existsSync(publicDirectory)) {
+    mkdirSync(publicDirectory, {
+      recursive: true
+    })
+  }
+
+  await writeImage({
+    response,
+    nameFile: 'favicon.png',
+    pathFile: publicDirectory
+  })
 }
