@@ -1,6 +1,6 @@
 {
   "name": "seo-ai",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Command-line tool to generate SEO metadata and HTML meta tags using AI models",
   "type": "module",
   "license": "MIT",
@@ -14,6 +14,8 @@
     "type": "git",
     "url": "https://github.com/xavimondev/seo-ai.git"
   },
+  "exports": "./dist/index.js",
+  "bin": "./dist/index.js",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",
