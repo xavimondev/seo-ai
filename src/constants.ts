@@ -1,36 +1,33 @@
 import { z } from 'zod'
+import { SeoMetadataOptional } from '@/types.js'
 
 export const DEFAULT_SEO_SCHEMA = z.object({
-  title: z.string(),
-  description: z.string(),
-  keywords: z.array(z.string()),
-  // metadataBase: z.string().url(),
-  openGraph: z.object({
-    type: z.string(),
-    url: z.string(),
-    title: z.string(),
-    description: z.string(),
-    locale: z.string(),
-    siteName: z.string()
-  }),
-  twitter: z.object({
-    card: z.string(),
-    site: z.string(),
-    title: z.string(),
-    description: z.string()
-  }),
-  // applicationName: z.string(),
-  // authors: z.array(z.object({ name: z.string(), url: z.string() })), ✅
-  // generator: z.string(),
-  // creator: z.string(), ✅
-  // publisher: z.string(), ✅
-  robots: z.string(), // index, follow
-  // icons: z.object({ ✅
-  //   icon: z.string(),
-  //   apple: z.string()
-  // }),
-  category: z.string()
+  title: z.string().optional(),
+  description: z.string().optional(),
+  keywords: z.array(z.string()).optional(),
+  openGraph: z
+    .object({
+      type: z.string(),
+      url: z.string(),
+      title: z.string(),
+      description: z.string(),
+      locale: z.string(),
+      siteName: z.string()
+    })
+    .optional(),
+  twitter: z
+    .object({
+      card: z.string(),
+      site: z.string(),
+      title: z.string(),
+      description: z.string()
+    })
+    .optional(),
+  robots: z.string().optional(),
+  category: z.string().optional()
 })
+
+export type SeoMetadata = z.infer<typeof DEFAULT_SEO_SCHEMA> & SeoMetadataOptional
 
 export const SEO_TAGS = [
   'title',
@@ -167,7 +164,10 @@ export const FILES_TO_IGNORE = [
   'vite.config.ts'
 ]
 
-export const OPTIONS_TAGS = [
+type OptionValue = SeoMetadataOptional & { core: string }
+type OptionTag = { value: keyof OptionValue; label: string; hint?: string }
+
+export const OPTIONS_TAGS: OptionTag[] = [
   { value: 'core', label: 'Core SEO tags', hint: 'recommended' },
   { value: 'icons', label: 'Icons', hint: 'recommended' },
   { value: 'applicationName', label: 'Application Name' },

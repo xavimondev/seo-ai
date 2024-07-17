@@ -8,30 +8,38 @@ import { z } from 'zod'
 import { DEFAULT_SEO_SCHEMA, SEO_TAGS } from '@/constants.js'
 import { generateIcon } from '@/utils/replicate.js'
 
-export const generateGlobalSEO = async ({
-  description,
-  model
+export const generateProjectDescription = async ({
+  model,
+  projectSummary
 }: {
-  description: string
   model: LanguageModel
+  projectSummary: string
 }) => {
-  const result = await generateObject({
+  const { text } = await generateText({
     model,
-    schema: z.object({ seo: DEFAULT_SEO_SCHEMA }),
-    prompt: `You are a SEO expert. Analyze the project information: ${description} and generate a comprehensive, SEO-friendly metadata.`
-    // maxTokens: 1024
+    prompt: `Craft a brief description that highlights the key functionalities, purpose, and value proposition of the project.
+    While generating the project description, please reference the following codebase details:
+    ${projectSummary}
+
+    Exclude quotes, code snippets, or bullet points from your response. Avoid deep technical details and focus on the project's high-level use cases and features.
+    Your response should be a maximum of 30 words.`
   })
 
-  return result.object.seo
+  return text
 }
 
 export const generateHTMLTags = async ({
-  description,
+  projectSummary,
   model
 }: {
-  description: string
+  projectSummary: string
   model: LanguageModel
 }) => {
+  const description = await generateProjectDescription({
+    model,
+    projectSummary
+  })
+
   const { text } = await generateText({
     model,
     prompt: `You are a SEO expert.Given the project description: "${description}".
@@ -47,6 +55,26 @@ export const generateHTMLTags = async ({
   })
 
   return text
+}
+
+export const generateSEOMetadata = async ({
+  projectSummary,
+  model
+}: {
+  projectSummary: string
+  model: LanguageModel
+}) => {
+  const result = await generateObject({
+    model,
+    schema: z.object({ seo: DEFAULT_SEO_SCHEMA }),
+    prompt: `You are an SEO expert. Analyze the following codebase information to determine what the project is about and generate world-class, SEO-friendly metadata.
+
+${projectSummary}
+
+Your analysis should result in comprehensive SEO metadata that accurately reflect the project's purpose and enhance its search engine visibility.`
+  })
+
+  return result.object.seo
 }
 
 const generateIconDefinition = async ({
@@ -66,18 +94,23 @@ const generateIconDefinition = async ({
 }
 
 export const generateIcons = async ({
-  description,
+  projectSummary,
   metadata,
   model,
   apiKey
 }: {
-  description: string
+  projectSummary: string
   metadata: boolean
   model: LanguageModel
   apiKey: string
 }) => {
+  const projectDescription = await generateProjectDescription({
+    model,
+    projectSummary
+  })
+
   const iconDefinition = await generateIconDefinition({
-    prompt: description,
+    prompt: projectDescription,
     model
   })
 
@@ -98,13 +131,13 @@ export const generateIcons = async ({
 
   const response = await fetch(iconUrl)
   const body = Readable.fromWeb(response.body as ReadableStream<any>)
-  const fileIconPath = path.join(publicDirectory, 'icon.png')
+  const fileIconPath = path.join(publicDirectory, 'favicon.png')
   await writeFile(fileIconPath, body)
 
   if (metadata) {
     return {
-      icon: '/seo/icons/icon.png',
-      apple: '/seo/icons/icon.png'
+      icon: '/seo/icons/favicon.png',
+      apple: '/seo/icons/favicon.png'
     }
   }
   return `<link rel="icon" href="https://example.com/seo/icons/icon.png" />\n<link rel="apple-touch-icon" href="https://example.com/seo/icons/icon.png" />\n`
@@ -120,54 +153,13 @@ export const generateKeyProjectFiles = async ({
   const result = await generateObject({
     model,
     schema: z.object({ paths: z.array(z.string()) }),
-    prompt: `You are a codebase analysis assistant. Please analyze the list of directories and files provided and identify the 15 most important files that are essential for understanding the core functionalities,and key features of the project.
-    Here is the list of directories and files:
-    ${files}`
+    prompt: `You are a codebase analysis expert. Your task is to examine the provided list of directories and files, and identify the 10 most crucial files 
+necessary for generating SEO meta tags.
+Here is the list of directories and files:
+${files}
+
+Please ensure your selection focuses on the following meta tags: ${SEO_TAGS.join(',')}`
   })
 
   return result.object.paths
-}
-
-export const generateFileSummary = async ({
-  filePath,
-  fileContents,
-  model
-}: {
-  filePath: string
-  fileContents: string
-  model: LanguageModel
-}) => {
-  const { text } = await generateText({
-    model,
-    prompt: `Create a concise summary that captures the primary purpose and key features of this file.
-    Emphasize the functionality and objectives of the code, avoiding technical implementation specifics. Reference the following codebase details while generating the summary:
-    - File path: ${filePath}
-    - File contents: ${fileContents}
-    
-    Additional requirements:
-    - Avoid starting with 'This file', 'The file', or 'This code', etc. and don't include the file path or name in the summary.
-    - Exclude quotes, code snippets, or bullet points from your response.Your response should be a maximum of 30 words.`
-  })
-
-  return text
-}
-
-export const generateProjectOverview = async ({
-  model,
-  codeSummary
-}: {
-  model: LanguageModel
-  codeSummary: string
-}) => {
-  const { text } = await generateText({
-    model,
-    prompt: `Craft an overview that highlights the key functionalities, purpose, and value proposition of the project.
-    While generating the project summary, please reference the following codebase details:
-    ${codeSummary}
-
-    Exclude quotes, code snippets, or bullet points from your response. Avoid deep technical details and focus on the project's high-level use cases and features.
-    Your response should be a maximum of 30 words.`
-  })
-
-  return text
 }

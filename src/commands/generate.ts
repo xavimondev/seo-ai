@@ -13,15 +13,14 @@ import { SEO_GENERATOR, SEO_GENERATOR_HTML } from '@/utils/seoGeneration.js'
 import { logger } from '@/utils/logger.js'
 import { getConf, getKey, Providers } from '@/utils/conf.js'
 import {
-  generateFileSummary,
-  generateGlobalSEO,
   generateHTMLTags,
   generateIcons,
   generateKeyProjectFiles,
-  generateProjectOverview
+  generateSEOMetadata
 } from '@/utils/ai.js'
 import { execa } from '@/utils/execa.js'
-import { DIRECTORIES_TO_IGNORE, FILES_TO_IGNORE, OPTIONS_TAGS } from '@/constants.js'
+import { DIRECTORIES_TO_IGNORE, FILES_TO_IGNORE, OPTIONS_TAGS, SeoMetadata } from '@/constants.js'
+import { Icon } from '@/types.js'
 
 const generateSchema = z.object({
   tags: z.array(z.string()).optional(),
@@ -148,7 +147,7 @@ export const generate = new Command()
                   file !== ''
               )
 
-            // Asking LLM to generate a list of files that are essential for the project.
+            // Asking LLM to generate a list of files that are essential for the SEO.
             const SUGGESTED_PATHS: string[] = []
             if (files.length > 15) {
               const projectKeyFiles = await generateKeyProjectFiles({
@@ -159,11 +158,11 @@ export const generate = new Command()
             } else {
               SUGGESTED_PATHS.push(...files)
             }
-            await setTimeout(2000)
+            await setTimeout(1000)
             s.stop('Scanning has ended')
 
-            // Formatting the results and reading the files, then generating a summary for each file
-            s.start('Generating a summary for each file...')
+            // Reading the files and generating a summary for each file
+            s.start('Generating a project summary...')
             const promises = SUGGESTED_PATHS.map(async (file) => {
               const cwd = path.resolve(process.cwd())
               const pathfile = path.join(cwd, file)
@@ -175,49 +174,22 @@ export const generate = new Command()
               }
             })
 
-            const results = await Promise.allSettled(promises)
+            const filesWithContent = await Promise.allSettled(promises)
 
-            const listSummary = results.map(async (result) => {
+            let projectSummary = ''
+
+            filesWithContent.forEach((result) => {
               // @ts-ignore
               const { status, value } = result
-              if (status === 'fulfilled' && model) {
+              if (status === 'fulfilled') {
                 const { path, content } = value
-                const fileSummary = await generateFileSummary({
-                  filePath: path,
-                  fileContents: content,
-                  model
-                })
-                return {
-                  path,
-                  summary: fileSummary
-                }
+                projectSummary += `File: ${path}\n\nFile contents: ${content}\n\n`
               }
-              return null
             })
-            const listSummaries = await Promise.allSettled(listSummary)
 
+            PROJECT_OVERVIEW = projectSummary
+            await setTimeout(1000)
             s.stop('Summary has been generated')
-
-            // Formatting code summary and generating project overview
-            s.start('Generating project overview...')
-            let codeSummary = ''
-            listSummaries.forEach((result) => {
-              // @ts-ignore
-              const { status, value } = result
-              if (status === 'fulfilled' && value) {
-                const { path, summary } = value
-                codeSummary += `Path: ${path}\nSummary: ${summary}\n\n`
-              }
-            })
-
-            const overview = await generateProjectOverview({
-              model,
-              codeSummary
-            })
-
-            PROJECT_OVERVIEW = overview
-
-            s.stop('Overview has been generated')
           } else {
             logger.warn('Your directory has no files to generate a summary for.')
             process.exit(0)
@@ -231,10 +203,11 @@ export const generate = new Command()
       }
 
       const s = spinner()
-      s.start('Generating SEO data...')
+      s.start('Generating SEO...')
 
-      let SEO_METADATA = {}
+      let SEO_METADATA: SeoMetadata = {}
       let HTML_METATAGS = ''
+
       for (const seoTag of seoTags) {
         const isValidTag = OPTIONS_TAGS.find((tag) => tag.value === seoTag)
         if (!isValidTag && !isMetadata) {
@@ -243,23 +216,27 @@ export const generate = new Command()
         }
 
         if (seoTag === 'core' && model) {
-          // Generate core SEO tags using AI
+          // Generate core SEO metdata and tags using AI
           if (isMetadata) {
-            SEO_METADATA = await generateGlobalSEO({ description: PROJECT_OVERVIEW, model })
+            SEO_METADATA = await generateSEOMetadata({
+              projectSummary: PROJECT_OVERVIEW,
+              model
+            })
           } else {
-            HTML_METATAGS = await generateHTMLTags({ description: PROJECT_OVERVIEW, model })
+            HTML_METATAGS = await generateHTMLTags({ projectSummary: PROJECT_OVERVIEW, model })
           }
         } else if (seoTag === 'icons' && model) {
           const icons = await generateIcons({
-            description: PROJECT_OVERVIEW,
+            projectSummary: PROJECT_OVERVIEW,
             metadata: isMetadata,
             model,
             apiKey: replicateKey
           })
+
           if (isMetadata) {
             SEO_METADATA = {
               ...SEO_METADATA,
-              icons
+              icons: icons as Icon
             }
           } else {
             HTML_METATAGS = HTML_METATAGS.concat(icons as string)
@@ -277,18 +254,16 @@ export const generate = new Command()
           }
         }
       }
-      // @ts-ignore
+
       if (isMetadata && SEO_METADATA.openGraph && SEO_METADATA.twitter) {
         // TODO: improve this, looks weird
         SEO_METADATA = {
           ...SEO_METADATA,
           openGraph: {
-            // @ts-ignore
             ...SEO_METADATA.openGraph,
             ...SEO_GENERATOR['images']()
           },
           twitter: {
-            // @ts-ignore
             ...SEO_METADATA.twitter,
             ...SEO_GENERATOR['images']()
           }
@@ -315,7 +290,6 @@ export const generate = new Command()
         process.exit(0)
       }
 
-      // @ts-ignore
       const { viewport, ...metadata } = SEO_METADATA
       const metadataHasContent = Object.keys(metadata).length > 0
       const metadataObject = metadataHasContent
