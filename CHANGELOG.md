@@ -1,5 +1,11 @@
 # seo-ai
 
+## 0.2.1
+
+### Patch Changes
+
+- update logic to generate project summary
+
 ## 0.2.0
 
 ### Minor Changes
