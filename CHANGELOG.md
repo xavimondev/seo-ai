@@ -1,5 +1,11 @@
 # seo-ai
 
+## 0.3.1
+
+### Patch Changes
+
+- fix typos and invalid authors object
+
 ## 0.3.0
 
 ### Minor Changes

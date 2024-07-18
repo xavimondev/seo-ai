@@ -12,7 +12,7 @@ export const generateApplicationNameHtml = () => {
   return `<meta name="application-name" content="${applicationName}" />\n`
 }
 
-export const generateMetadataBase = () => ({ metadataBase: 'https://example.com' })
+export const generateMetadataBase = () => ({ metadataBase: new URL('https://example.com') })
 
 export const generateAuthors = () => {
   const packageInfo = getPackageJson()
@@ -23,7 +23,7 @@ export const generateAuthors = () => {
           name: packageInfo.author?.name ?? '@seodev',
           url: packageInfo.author?.url ?? 'https//github.com/seodev'
         }
-    : '@seodev'
+    : { name: '@seodev', url: 'https://github.com/seodev' }
 
   return { authors }
 }
@@ -113,7 +113,7 @@ export const generateGraphImages = () => ({
   images: [
     {
       url: '/seo/banner/og.png',
-      with: 1200,
+      width: 1200,
       height: 675,
       alt: 'Banner AI'
     }
