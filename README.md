@@ -1,3 +1,4 @@
+![demoseo](https://github.com/user-attachments/assets/f71ca01f-cf6b-48d9-801b-6d5a7e11de18)
 <div align="center">
   <p>A Command-line tool that generates SEO metadata and HTML meta tags using AI models.</p>
 	<a href="https://www.npmjs.com/package/seo-ai"><img src="https://img.shields.io/npm/v/seo-ai" alt="Current version"></a>
