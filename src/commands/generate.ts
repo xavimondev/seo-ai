@@ -89,7 +89,7 @@ export const generate = new Command()
             apiKey,
             compatibility: 'strict'
           })
-          model = openai('gpt-3.5-turbo')
+          model = openai('gpt-4o')
         } else {
           logger.error('Invalid provider')
           process.exit(0)

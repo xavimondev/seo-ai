@@ -1,5 +1,11 @@
 # seo-ai
 
+## 0.3.2
+
+### Patch Changes
+
+- update openai model
+
 ## 0.3.1
 
 ### Patch Changes
