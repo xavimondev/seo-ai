@@ -10,7 +10,7 @@
 ## Requirements
 
 - Node >= 18
-- pnpm > 8
+- pnpm >= 8
 
 ## Usage
 
