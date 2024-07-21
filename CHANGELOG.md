@@ -1,5 +1,11 @@
 # seo-ai
 
+## 0.4.0
+
+### Minor Changes
+
+- add compatibility for next.config.ts
+
 ## 0.3.2
 
 ### Patch Changes

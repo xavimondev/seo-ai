@@ -42,7 +42,12 @@ export const generate = new Command()
     const pwd = path.resolve(process.cwd())
     const nextMjsFile = path.join(pwd, 'next.config.mjs')
     const nextJsFile = path.join(pwd, 'next.config.js')
-    if ((existsSync(nextMjsFile) || existsSync(nextJsFile)) && !opts.html) {
+    // next-canary
+    const nextTsFile = path.join(pwd, 'next.config.ts')
+    if (
+      (existsSync(nextMjsFile) || existsSync(nextJsFile) || existsSync(nextTsFile)) &&
+      !opts.html
+    ) {
       isMetadata = true
     }
 
