@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { SeoMetadataOptional } from '@/types.js'
+import { SeoMetadataOptional } from '@/types'
 
 export const DEFAULT_SEO_SCHEMA = z.object({
   title: z.string().optional(),

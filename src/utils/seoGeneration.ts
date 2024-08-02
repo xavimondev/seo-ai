@@ -1,4 +1,4 @@
-import { getPackageJson } from '@/utils/getPackageJson.js'
+import { getPackageJson } from '@/utils/getPackageJson'
 
 export const generateApplicationName = () => {
   const packageInfo = getPackageJson()

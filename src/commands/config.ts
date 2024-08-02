@@ -1,7 +1,7 @@
 import { Command } from 'commander'
-import { clearConf, getKey, getProvider, setKey } from '@/utils/conf.js'
-import { handleError } from '@/utils/handleError.js'
-import { logger } from '@/utils/logger.js'
+import { clearConf, getKey, getProvider, setKey } from '@/utils/conf'
+import { handleError } from '@/utils/handleError'
+import { logger } from '@/utils/logger'
 
 export const config = new Command()
   .name('config')

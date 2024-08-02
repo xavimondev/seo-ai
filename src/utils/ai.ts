@@ -2,9 +2,9 @@ import { existsSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { generateObject, generateText, type LanguageModel } from 'ai'
 import { z } from 'zod'
-import { DEFAULT_SEO_SCHEMA, SEO_TAGS } from '@/constants.js'
-import { generateIcon } from '@/utils/replicate.js'
-import { writeImage } from '@/utils/writeImage.js'
+import { DEFAULT_SEO_SCHEMA, SEO_TAGS } from '@/constants'
+import { generateIcon } from '@/utils/replicate'
+import { writeImage } from '@/utils/writeImage'
 
 export const generateProjectDescription = async ({
   model,

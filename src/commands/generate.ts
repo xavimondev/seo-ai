@@ -8,19 +8,19 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { setTimeout } from 'node:timers/promises'
 import { existsSync, mkdirSync } from 'node:fs'
-import { handleError } from '@/utils/handleError.js'
-import { SEO_GENERATOR, SEO_GENERATOR_HTML } from '@/utils/seoGeneration.js'
-import { logger } from '@/utils/logger.js'
-import { getConf, getKey, Providers } from '@/utils/conf.js'
+import { handleError } from '@/utils/handleError'
+import { SEO_GENERATOR, SEO_GENERATOR_HTML } from '@/utils/seoGeneration'
+import { logger } from '@/utils/logger'
+import { getConf, getKey, Providers } from '@/utils/conf'
 import {
   generateHTMLTags,
   generateIcons,
   generateKeyProjectFiles,
   generateSEOMetadata
-} from '@/utils/ai.js'
-import { execa } from '@/utils/execa.js'
-import { DIRECTORIES_TO_IGNORE, FILES_TO_IGNORE, OPTIONS_TAGS, SeoMetadata } from '@/constants.js'
-import { Icon } from '@/types.js'
+} from '@/utils/ai'
+import { execa } from '@/utils/execa'
+import { DIRECTORIES_TO_IGNORE, FILES_TO_IGNORE, OPTIONS_TAGS, SeoMetadata } from '@/constants'
+import { Icon } from '@/types'
 
 const generateSchema = z.object({
   tags: z.array(z.string()).optional(),
@@ -322,7 +322,7 @@ const generateProjectSummary = async ({ suggestedPaths }: { suggestedPaths: stri
   return projectSummary
 }
 
-// It's a Next.js project, so prompt the user to enter file's path where they want to add the metadata
+// It's a Next project, so prompt the user to enter file's path where they want to add the metadata
 const generateNextMetadataObject = async ({ SEO_METADATA }: { SEO_METADATA: SeoMetadata }) => {
   const filePathEntered = await text({
     message: `Where would you like to add the metadata object?`,
