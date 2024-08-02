@@ -52,7 +52,7 @@ npx seo-ai generate
 ### CLI
 
 > [!NOTE]  
-> When running the CLI in a Next.js project, it will create a medatata object according to the [Next.js docs](https://nextjs.org/docs/app/building-your-application/optimizing/metadata), if you still want to generate HTML meta tags, use the `--html` or `-h` option.
+> When running the CLI on a Next.js projects, it will create a medatata object according to the [Next.js docs](https://nextjs.org/docs/app/building-your-application/optimizing/metadata), if you still want to generate HTML meta tags, use the `--html` or `-h` option.
 
 ```sh
 npx seo-ai [options] [command]
