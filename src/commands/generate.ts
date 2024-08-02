@@ -36,20 +36,7 @@ export const generate = new Command()
   .action(async (tags, opts) => {
     const options = generateSchema.parse({ tags, ...opts })
     let seoTags = options.tags ?? []
-    let isMetadata = false
-
-    // checking if it's a nextjs project, so let's build a metadata object
-    const pwd = path.resolve(process.cwd())
-    const nextMjsFile = path.join(pwd, 'next.config.mjs')
-    const nextJsFile = path.join(pwd, 'next.config.js')
-    // next-canary
-    const nextTsFile = path.join(pwd, 'next.config.ts')
-    if (
-      (existsSync(nextMjsFile) || existsSync(nextJsFile) || existsSync(nextTsFile)) &&
-      !opts.html
-    ) {
-      isMetadata = true
-    }
+    let isMetadata = isNextjsProject({ html: opts.html })
 
     const lastProvider = Object.keys(getConf()).at(-1)
     if (!lastProvider) {
@@ -84,24 +71,8 @@ export const generate = new Command()
 
       if (seoTags.includes('icons') || seoTags.includes('core')) {
         const apiKey = getKey({ provider: lastProvider as Providers }) as string
-        if (lastProvider === 'mistral') {
-          const mistral = createMistral({
-            apiKey
-          })
-          model = mistral('mistral-large-latest')
-        } else if (lastProvider === 'openai') {
-          const openai = createOpenAI({
-            apiKey,
-            compatibility: 'strict'
-          })
-          model = openai('gpt-4o')
-        } else if (lastProvider === 'groq') {
-          const groq = createOpenAI({
-            baseURL: 'https://api.groq.com/openai/v1',
-            apiKey: apiKey
-          })
-          model = groq('llama-3.1-70b-versatile')
-        } else {
+        model = await getAIProvider({ lastProvider, apiKey })
+        if (!model) {
           logger.error('Invalid provider')
           process.exit(0)
         }
@@ -147,60 +118,8 @@ export const generate = new Command()
               }
             }
 
-            const s = spinner()
-            s.start('Scanning project files...')
-            const files = gitTree
-              .split('\n')
-              .filter(
-                (file) =>
-                  !DIRECTORIES_TO_IGNORE.includes(file) &&
-                  !FILES_TO_IGNORE.includes(file) &&
-                  file !== ''
-              )
-
-            // Asking LLM to generate a list of files that are essential for the SEO.
-            const SUGGESTED_PATHS: string[] = []
-            if (files.length > 20) {
-              const projectKeyFiles = await generateKeyProjectFiles({
-                files: files.join('\n'),
-                model
-              })
-              SUGGESTED_PATHS.push(...projectKeyFiles)
-            } else {
-              SUGGESTED_PATHS.push(...files)
-            }
-            await setTimeout(1000)
-            s.stop('Scanning has ended')
-
-            // Reading the files and generating a summary for each file
-            s.start('Generating a project summary...')
-            const promises = SUGGESTED_PATHS.map(async (file) => {
-              const cwd = path.resolve(process.cwd())
-              const pathfile = path.join(cwd, file)
-
-              const content = await fs.readFile(pathfile, { encoding: 'utf8' })
-              return {
-                path: file,
-                content
-              }
-            })
-
-            const filesWithContent = await Promise.allSettled(promises)
-
-            let projectSummary = ''
-
-            filesWithContent.forEach((result) => {
-              // @ts-ignore
-              const { status, value } = result
-              if (status === 'fulfilled') {
-                const { path, content } = value
-                projectSummary += `File: ${path}\n\nFile contents: ${content}\n\n`
-              }
-            })
-
-            PROJECT_OVERVIEW = projectSummary
-            await setTimeout(1000)
-            s.stop('Summary has been generated')
+            const suggestedPaths = await generateSuggestedPaths({ gitTree, model })
+            PROJECT_OVERVIEW = await generateProjectSummary({ suggestedPaths })
           } else {
             logger.warn('Your directory has no files to generate a summary for.')
             process.exit(0)
@@ -267,7 +186,6 @@ export const generate = new Command()
       }
 
       if (isMetadata && SEO_METADATA.openGraph && SEO_METADATA.twitter) {
-        // TODO: improve this, looks weird
         SEO_METADATA = {
           ...SEO_METADATA,
           openGraph: {
@@ -292,46 +210,156 @@ export const generate = new Command()
 
       if (seoTags.length === 1 && seoTags.at(0) === 'icons') return
 
-      // It's a Next.js project, so prompt the user to enter file's path where they want to add the metadata
-      const filePathEntered = await text({
-        message: `Where would you like to add the metadata object?`,
-        placeholder: 'src/app/layout.tsx'
-        // defaultValue: 'src/app/layout.tsx'
-      })
-      if (isCancel(filePathEntered)) {
-        cancel('Operation cancelled.')
-        process.exit(0)
-      }
-
-      const { viewport, ...metadata } = SEO_METADATA
-      const metadataHasContent = Object.keys(metadata).length > 0
-      const metadataObject = metadataHasContent
-        ? `export const metadata: Metadata = ${JSON.stringify(metadata, null, 2)}`
-        : ''
-      // https://nextjs.org/docs/app/api-reference/functions/generate-viewport
-      const viewportObject = viewport
-        ? `export const viewport: Viewport = ${JSON.stringify(viewport, null, 2)}`
-        : ''
-      const seoObject = `\n${metadataObject}\n${viewportObject}`
-
-      if (!filePathEntered || filePathEntered.trim().length === 0) {
-        outro(`Here's the metadata object:`)
-        logger.success(seoObject)
-      } else {
-        const nextFilePath = path.join(filePathEntered)
-        const dir = path.dirname(nextFilePath)
-        const file = path.basename(nextFilePath)
-
-        if (!existsSync(dir)) {
-          mkdirSync(dir, {
-            recursive: true
-          })
-        }
-
-        await fs.appendFile(path.join(dir, file), seoObject)
-        outro('Metadata object added!')
-      }
+      await generateNextMetadataObject({ SEO_METADATA })
     } catch (error) {
       handleError(error)
     }
   })
+
+// checking if it's a nextjs project, so let's build a metadata object
+const isNextjsProject = ({ html }: { html: boolean }) => {
+  const pwd = path.resolve(process.cwd())
+  const nextMjsFile = path.join(pwd, 'next.config.mjs')
+  const nextJsFile = path.join(pwd, 'next.config.js')
+  // next-canary
+  const nextTsFile = path.join(pwd, 'next.config.ts')
+  const isNextjs =
+    (existsSync(nextMjsFile) || existsSync(nextJsFile) || existsSync(nextTsFile)) && !html
+  return isNextjs
+}
+
+const getAIProvider = async ({
+  lastProvider,
+  apiKey
+}: {
+  lastProvider: string
+  apiKey: string
+}) => {
+  if (lastProvider === 'mistral') {
+    const mistral = createMistral({
+      apiKey
+    })
+    return mistral('mistral-large-latest')
+  } else if (lastProvider === 'openai') {
+    const openai = createOpenAI({
+      apiKey,
+      compatibility: 'strict'
+    })
+    return openai('gpt-4o')
+  } else if (lastProvider === 'groq') {
+    const groq = createOpenAI({
+      baseURL: 'https://api.groq.com/openai/v1',
+      apiKey: apiKey
+    })
+    return groq('llama-3.1-70b-versatile')
+  }
+  return
+}
+
+const generateSuggestedPaths = async ({
+  gitTree,
+  model
+}: {
+  gitTree: string
+  model: LanguageModel
+}) => {
+  const s = spinner()
+  s.start('Scanning project files...')
+  const files = gitTree
+    .split('\n')
+    .filter(
+      (file) =>
+        !DIRECTORIES_TO_IGNORE.includes(file) && !FILES_TO_IGNORE.includes(file) && file !== ''
+    )
+
+  // Asking LLM to generate a list of files that are essential for the SEO.
+  const SUGGESTED_PATHS: string[] = []
+  if (files.length > 25) {
+    const projectKeyFiles = await generateKeyProjectFiles({
+      files: files.join('\n'),
+      model
+    })
+    SUGGESTED_PATHS.push(...projectKeyFiles)
+  } else {
+    SUGGESTED_PATHS.push(...files)
+  }
+  await setTimeout(1000)
+  s.stop('Scanning has ended')
+  return SUGGESTED_PATHS
+}
+
+const generateProjectSummary = async ({ suggestedPaths }: { suggestedPaths: string[] }) => {
+  const s = spinner()
+  s.start('Generating a project summary...')
+
+  const promises = suggestedPaths.map(async (file) => {
+    const cwd = path.resolve(process.cwd())
+    const pathfile = path.join(cwd, file)
+
+    const content = await fs.readFile(pathfile, { encoding: 'utf8' })
+    return {
+      path: file,
+      content
+    }
+  })
+
+  const filesWithContent = await Promise.allSettled(promises)
+
+  let projectSummary = ''
+
+  filesWithContent.forEach((result) => {
+    // @ts-ignore
+    const { status, value } = result
+    if (status === 'fulfilled') {
+      const { path, content } = value
+      projectSummary += `File: ${path}\n\nFile contents: ${content}\n\n`
+    }
+  })
+
+  await setTimeout(1000)
+  s.stop('Summary has been generated')
+
+  return projectSummary
+}
+
+// It's a Next.js project, so prompt the user to enter file's path where they want to add the metadata
+const generateNextMetadataObject = async ({ SEO_METADATA }: { SEO_METADATA: SeoMetadata }) => {
+  const filePathEntered = await text({
+    message: `Where would you like to add the metadata object?`,
+    placeholder: 'src/app/layout.tsx'
+    // defaultValue: 'src/app/layout.tsx'
+  })
+  if (isCancel(filePathEntered)) {
+    cancel('Operation cancelled.')
+    process.exit(0)
+  }
+
+  const { viewport, ...metadata } = SEO_METADATA
+  const metadataHasContent = Object.keys(metadata).length > 0
+  const metadataObject = metadataHasContent
+    ? `export const metadata: Metadata = ${JSON.stringify(metadata, null, 2)}`
+    : ''
+  // https://nextjs.org/docs/app/api-reference/functions/generate-viewport
+  const viewportObject = viewport
+    ? `export const viewport: Viewport = ${JSON.stringify(viewport, null, 2)}`
+    : ''
+  const seoObject = `\n${metadataObject}\n${viewportObject}`
+
+  if (!filePathEntered || filePathEntered.trim().length === 0) {
+    outro(`Here's the metadata object:`)
+    logger.success(seoObject)
+  } else {
+    const nextFilePath = path.join(filePathEntered)
+    const dir = path.dirname(nextFilePath)
+    const file = path.basename(nextFilePath)
+
+    if (!existsSync(dir)) {
+      mkdirSync(dir, {
+        recursive: true
+      })
+    }
+
+    await fs.appendFile(path.join(dir, file), seoObject)
+    outro('Metadata object added!')
+  }
+}
