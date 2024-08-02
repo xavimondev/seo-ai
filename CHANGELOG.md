@@ -1,5 +1,11 @@
 # seo-ai
 
+## 0.5.0
+
+### Minor Changes
+
+- add groq provider
+
 ## 0.4.0
 
 ### Minor Changes

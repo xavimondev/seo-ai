@@ -95,6 +95,12 @@ export const generate = new Command()
             compatibility: 'strict'
           })
           model = openai('gpt-4o')
+        } else if (lastProvider === 'groq') {
+          const groq = createOpenAI({
+            baseURL: 'https://api.groq.com/openai/v1',
+            apiKey: apiKey
+          })
+          model = groq('llama-3.1-70b-versatile')
         } else {
           logger.error('Invalid provider')
           process.exit(0)

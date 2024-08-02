@@ -34,6 +34,15 @@ npx seo-ai config set OPENAI_API_KEY=<your-key>
 npx seo-ai config set MISTRAL_API_KEY=<your-key>
 ```
 
+### GROQ_API_KEY
+
+- Go to the [Groq Console](https://console.groq.com/keys) and generate your API key.
+- Set the key:
+
+```bash
+npx seo-ai config set GROQ_API_KEY=<your-key>
+```
+
 ### Run
 
 ```sh
