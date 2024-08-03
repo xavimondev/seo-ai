@@ -100,9 +100,8 @@ npx seo-ai config clear
   
 | Command           | Description                                                                                          |
 |-------------------|------------------------------------------------------------------------------------                  |
-| `core`            | Generate meta tags: `title`, `description`, `keywords`, `openGraph`, `twitter`, `robots`, `category` |
+| `core`            | Generate meta tags: `title`, `description`, `keywords`, `openGraph`, `twitter`, `robots`, `category`, `generator`,`applicationName` |
 | `icons`           | Define icon meta tags. You'll be prompted for a Replicate Token. You can find it here: [Replicate](https://replicate.com/account/api-tokens)                     |
-| `applicationName` | Specify the name of the web application                                                              |
 | `metadataBase`    | Set the base URL for metadata relative paths. Available only for Next.js projects                    |
 | `authors`         | List authors of the content                                                                          |
 | `creator`         | Identify the creator of the content                                                                  |
@@ -117,10 +116,10 @@ npx seo-ai config clear
 | `manifest`        | Specify a link to the web application's manifest file                                                |
 | `verification`    | The common verification tokens for the document                                                      |
 | `viewport`        | The viewport setting for the document                                                                |
-| `generator`       | The generator used for the document                                                                  |
 
 ## Stack
 
+- [Vercel AI SDK](https://sdk.vercel.ai/): Tools to build AI-powered products.
 - [tsup](https://github.com/egoist/tsup): A TypeScript-focused module bundler.
 - [chalk](https://github.com/chalk/chalk): Chalk is a library for styling terminal text with color and formatting options, making console output more visually appealing and readable.
 - [commander](https://github.com/tj/commander.js/): Commander is a feature-rich library for creating command-line interfaces (CLIs) in Node.js.
