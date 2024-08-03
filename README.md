@@ -1,5 +1,7 @@
-![demoseo-ai](https://github.com/user-attachments/assets/b3c6c217-5012-4426-9c06-aed15a353109)
 <div align="center">
+
+[![seo-ai](https://res.cloudinary.com/marcomontalbano/image/upload/v1722657091/video_to_markdown/images/video--efff86e303e7371cd8f24793cb2aa149-c05b58ac6eb4c4700831b2b3070cd403.jpg)](https://res.cloudinary.com/di19fkmzs/video/upload/v1722657052/demo_ygveel.mp4 "seo-ai")
+
   <p>A Command-line tool that generates SEO metadata and HTML meta tags using AI models.</p>
 	<a href="https://www.npmjs.com/package/seo-ai"><img src="https://img.shields.io/npm/v/seo-ai" alt="Current version"></a>
   <a href="https://img.shields.io/github/release/xavimondev/seo-ai"><img src="https://img.shields.io/github/release/xavimondev/seo-ai" alt="Release"></a>
