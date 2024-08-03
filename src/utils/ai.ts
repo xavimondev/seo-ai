@@ -2,9 +2,21 @@ import { existsSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
 import { generateObject, generateText, type LanguageModel } from 'ai'
 import { z } from 'zod'
-import { DEFAULT_SEO_SCHEMA, SEO_TAGS } from '@/constants'
+import { DEFAULT_SEO_SCHEMA } from '@/constants'
 import { generateIcon } from '@/utils/replicate'
 import { writeImage } from '@/utils/writeImage'
+
+const SEO_TAGS = [
+  'title',
+  'description',
+  'keywords',
+  'openGraph',
+  'twitter',
+  'robots',
+  'category',
+  'applicationName',
+  'generator'
+]
 
 export const generateProjectDescription = async ({
   model,

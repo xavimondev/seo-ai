@@ -1,17 +1,5 @@
 import { getPackageJson } from '@/utils/getPackageJson'
 
-export const generateApplicationName = () => {
-  const packageInfo = getPackageJson()
-  const applicationName = packageInfo.name ?? 'wonderful-app'
-
-  return { applicationName }
-}
-export const generateApplicationNameHtml = () => {
-  const packageInfo = getPackageJson()
-  const applicationName = packageInfo.name ?? 'wonderful-app'
-  return `<meta name="application-name" content="${applicationName}" />\n`
-}
-
 export const generateMetadataBase = () => ({ metadataBase: new URL('https://example.com') })
 
 export const generateAuthors = () => {
@@ -98,9 +86,6 @@ export const generateManifest = () => ({ manifest: 'https://example.com/manifest
 export const generateManifestHtml = () =>
   `<link rel="manifest" href="https://example.com/manifest.json" />\n`
 
-export const generateGeneratorTag = () => ({ generator: 'AI' })
-export const generateGeneratorTagHtml = () => `<meta name="generator" content="AI" />\n`
-
 export const generateVerification = () => ({
   verification: { google: '1234567890', yandex: '1234567890', me: '1234567890' }
 })
@@ -135,11 +120,9 @@ export const generateColorsHtml =
 <meta name="color-scheme" content="dark" />\n`
 
 export const SEO_GENERATOR: Record<string, any> = {
-  applicationName: generateApplicationName,
   authors: generateAuthors,
   creator: generateCreator,
   publisher: generatePublisher,
-  generator: generateGeneratorTag,
   metadataBase: generateMetadataBase,
   classification: generateClassification,
   bookmarks: generateBookmarks,
@@ -155,11 +138,9 @@ export const SEO_GENERATOR: Record<string, any> = {
 }
 
 export const SEO_GENERATOR_HTML: Record<string, any> = {
-  applicationName: generateApplicationNameHtml,
   authors: generateAuthorsHtml,
   creator: generateCreatorHtml,
   publisher: generatePublisherHtml,
-  generator: generateGeneratorTagHtml,
   classification: generateClassificationHtml,
   bookmarks: generateBookmarksHtml,
   assets: generateAssetsHtml,

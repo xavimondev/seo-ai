@@ -24,20 +24,12 @@ export const DEFAULT_SEO_SCHEMA = z.object({
     })
     .optional(),
   robots: z.string().optional(),
-  category: z.string().optional()
+  category: z.string().optional(),
+  applicationName: z.string().optional(),
+  generator: z.string().optional()
 })
 
 export type SeoMetadata = z.infer<typeof DEFAULT_SEO_SCHEMA> & SeoMetadataOptional
-
-export const SEO_TAGS = [
-  'title',
-  'description',
-  'keywords',
-  'openGraph',
-  'twitter',
-  'robots',
-  'category'
-]
 
 export const DIRECTORIES_TO_IGNORE = [
   'node_modules',
@@ -170,7 +162,6 @@ type OptionTag = { value: keyof OptionValue; label: string; hint?: string }
 export const OPTIONS_TAGS: OptionTag[] = [
   { value: 'core', label: 'Core SEO tags', hint: 'recommended' },
   { value: 'icons', label: 'Icons', hint: 'recommended' },
-  { value: 'applicationName', label: 'Application Name' },
   { value: 'authors', label: 'Authors' },
   { value: 'creator', label: 'Creator' },
   { value: 'publisher', label: 'Publisher' },
@@ -183,6 +174,5 @@ export const OPTIONS_TAGS: OptionTag[] = [
   { value: 'formatDetection', label: 'Format Detection' },
   { value: 'manifest', label: 'Manifest' },
   { value: 'verification', label: 'Verification' },
-  { value: 'viewport', label: 'Colors' },
-  { value: 'generator', label: 'Generator used' }
+  { value: 'viewport', label: 'Colors' }
 ]
