@@ -1,5 +1,11 @@
 # seo-ai
 
+## 0.6.1
+
+### Patch Changes
+
+- fix default value in prompt
+
 ## 0.6.0
 
 ### Minor Changes

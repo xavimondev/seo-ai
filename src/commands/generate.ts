@@ -326,8 +326,8 @@ const generateProjectSummary = async ({ suggestedPaths }: { suggestedPaths: stri
 const generateNextMetadataObject = async ({ SEO_METADATA }: { SEO_METADATA: SeoMetadata }) => {
   const filePathEntered = await text({
     message: `Where would you like to add the metadata object?`,
-    placeholder: 'src/app/layout.tsx'
-    // defaultValue: 'src/app/layout.tsx'
+    placeholder: 'src/app/layout.tsx',
+    defaultValue: 'src/app/layout.tsx'
   })
   if (isCancel(filePathEntered)) {
     cancel('Operation cancelled.')
