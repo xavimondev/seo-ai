@@ -48,7 +48,7 @@ npx seo-ai config set GROQ_API_KEY=<your-key>
 ### Run
 
 ```sh
-npx seo-ai generate
+npx seo-ai@latest generate
 ```
 
 ### CLI
@@ -70,7 +70,7 @@ config [arguments]            Sets API Keys configuration
 #### Generate
 
 ```sh
-npx seo-ai generate [tags] [options]
+npx seo-ai@latest generate [tags] [options]
 
 Arguments:
 [tags]       SEO tags to be generated. See [Available Tags](#available-tags)

@@ -1,5 +1,11 @@
 # seo-ai
 
+## 0.7.1
+
+### Patch Changes
+
+- update readme and package json info
+
 ## 0.7.0
 
 ### Minor Changes
