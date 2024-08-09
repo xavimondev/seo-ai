@@ -1,5 +1,11 @@
 # seo-ai
 
+## 0.7.0
+
+### Minor Changes
+
+- replace replicate with DALL-E for icon generation
+
 ## 0.6.1
 
 ### Patch Changes

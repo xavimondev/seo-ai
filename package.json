@@ -1,6 +1,6 @@
 {
   "name": "seo-ai",
-  "version": "0.6.1",
+  "version": "0.7.0",
   "description": "Command-line tool to generate SEO metadata and HTML meta tags using AI models",
   "type": "module",
   "license": "MIT",
