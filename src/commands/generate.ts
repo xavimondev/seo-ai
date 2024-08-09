@@ -36,9 +36,9 @@ export const generate = new Command()
   .action(async (tags, opts) => {
     const options = generateSchema.parse({ tags, ...opts })
     let seoTags = options.tags ?? []
-    let isMetadata = isNextjsProject({ html: opts.html })
+    let { isNextAppDirectory: isMetadata, appDirectory } = getNextAppDirectory({ html: opts.html })
 
-    const lastProvider = Object.keys(getConf()).at(-1)
+    const lastProvider = Object.keys(getConf()).at(-1) as Providers | undefined
     if (!lastProvider) {
       logger.info(`You need to configure your provider first. Run:`)
       logger.success(`npx seo-ai config set YOUR_AI_PROVIDER=YOUR_API_KEY`)
@@ -67,10 +67,10 @@ export const generate = new Command()
       // AI
       let PROJECT_OVERVIEW = ''
       let model: LanguageModel | undefined = undefined
-      let replicateKey: string | symbol = ''
+      let openaiIconKey: string | symbol = ''
 
       if (seoTags.includes('icons') || seoTags.includes('core')) {
-        const apiKey = getKey({ provider: lastProvider as Providers }) as string
+        const apiKey = getKey({ provider: lastProvider }) as string
         model = await getAIProvider({ lastProvider, apiKey })
         if (!model) {
           logger.error('Invalid provider')
@@ -103,16 +103,16 @@ export const generate = new Command()
 
           // Filtering files that are not in the ignore list
           if (gitTree !== '') {
-            if (seoTags.includes('icons')) {
-              replicateKey = await text({
-                message: 'For generating icons, enter your Replicate API Key',
-                placeholder: 'r5_0398114l4312165232',
+            if (seoTags.includes('icons') && lastProvider !== 'openai') {
+              openaiIconKey = await text({
+                message: 'Using DALL-E for icons, please enter your OpenAI API Key',
+                placeholder: 'sk-proj-82mlo09s',
                 validate(value) {
                   const descriptionLength = value.trim().length
-                  if (descriptionLength === 0) return `Replicate API Key is required!`
+                  if (descriptionLength === 0) return `OpenAI API Key is required!`
                 }
               })
-              if (isCancel(replicateKey)) {
+              if (isCancel(openaiIconKey)) {
                 cancel('Operation cancelled.')
                 process.exit(0)
               }
@@ -156,21 +156,26 @@ export const generate = new Command()
             HTML_METATAGS = await generateHTMLTags({ projectSummary: PROJECT_OVERVIEW, model })
           }
         } else if (seoTag === 'icons' && model) {
+          const keyForIcons = openaiIconKey || (getKey({ provider: 'openai' }) as string)
           const icons = await generateIcons({
             projectSummary: PROJECT_OVERVIEW,
-            metadata: isMetadata,
+            isMetadata,
             model,
-            apiKey: replicateKey
+            apiKey: keyForIcons,
+            appDirectory
           })
 
-          if (isMetadata && icons) {
-            SEO_METADATA = {
-              ...SEO_METADATA,
-              icons: icons as Icon
-            }
-          } else {
-            HTML_METATAGS = HTML_METATAGS.concat(icons as string)
-          }
+          if (!icons) continue
+
+          HTML_METATAGS = HTML_METATAGS.concat(icons as string)
+          // if (isMetadata && icons) {
+          //   SEO_METADATA = {
+          //     ...SEO_METADATA,
+          //     icons: icons as Icon
+          //   }
+          // } else {
+          //   HTML_METATAGS = HTML_METATAGS.concat(icons as string)
+          // }
         } else {
           if (isMetadata) {
             const getTagContent = SEO_GENERATOR[seoTag]
@@ -217,15 +222,31 @@ export const generate = new Command()
   })
 
 // checking if it's a nextjs project, so let's build a metadata object
-const isNextjsProject = ({ html }: { html: boolean }) => {
+const getNextAppDirectory = ({ html }: { html: boolean }) => {
   const pwd = path.resolve(process.cwd())
+
   const nextMjsFile = path.join(pwd, 'next.config.mjs')
   const nextJsFile = path.join(pwd, 'next.config.js')
-  // next-canary
-  const nextTsFile = path.join(pwd, 'next.config.ts')
-  const isNextjs =
-    (existsSync(nextMjsFile) || existsSync(nextJsFile) || existsSync(nextTsFile)) && !html
-  return isNextjs
+  const nextTsFile = path.join(pwd, 'next.config.ts') // next-canary
+  const isNextProject = existsSync(nextMjsFile) || existsSync(nextJsFile) || existsSync(nextTsFile)
+
+  const appPaths = [path.join('app'), path.join('src/app')]
+  let appDirectory = ''
+  for (const path of appPaths) {
+    if (existsSync(path)) {
+      appDirectory = path
+      break
+    }
+  }
+
+  const existsDirectory = appDirectory !== ''
+
+  const isNextAppDirectory = isNextProject && existsDirectory && !html
+
+  return {
+    isNextAppDirectory,
+    appDirectory
+  }
 }
 
 const getAIProvider = async ({

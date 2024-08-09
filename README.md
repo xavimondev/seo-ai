@@ -101,9 +101,9 @@ npx seo-ai config clear
 ## Available Tags
   
 | Command           | Description                                                                                          |
-|-------------------|------------------------------------------------------------------------------------                  |
+|-------------------|------------------------------------------------------------------------------------                   |
 | `core`            | Generate meta tags: `title`, `description`, `keywords`, `openGraph`, `twitter`, `robots`, `category`, `generator`,`applicationName` |
-| `icons`           | Define icon meta tags. You'll be prompted for a Replicate Token. You can find it here: [Replicate](https://replicate.com/account/api-tokens)                     |
+| `icons`           | Define icon meta tags. It uses DALL-E 2, so you'll be prompted for a OpenAI Key                      |
 | `metadataBase`    | Set the base URL for metadata relative paths. Available only for Next.js projects                    |
 | `authors`         | List authors of the content                                                                          |
 | `creator`         | Identify the creator of the content                                                                  |
