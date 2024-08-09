@@ -1,10 +1,8 @@
-import { existsSync, mkdirSync } from 'node:fs'
-import path from 'node:path'
 import { generateObject, generateText, type LanguageModel } from 'ai'
 import { z } from 'zod'
 import { DEFAULT_SEO_SCHEMA } from '@/constants'
-import { generateIcon } from '@/utils/replicate'
-import { writeImage } from '@/utils/writeImage'
+import { generateImage } from './generateImage'
+import { generateAppleIcon, generateFavicon } from './saveIcons'
 
 const SEO_TAGS = [
   'title',
@@ -105,14 +103,16 @@ const generateIconDefinition = async ({
 
 export const generateIcons = async ({
   projectSummary,
-  metadata,
+  isMetadata,
   model,
-  apiKey
+  apiKey,
+  appDirectory
 }: {
   projectSummary: string
-  metadata: boolean
+  isMetadata: boolean
   model: LanguageModel
   apiKey: string
+  appDirectory: string
 }) => {
   const projectDescription = await generateProjectDescription({
     model,
@@ -124,35 +124,28 @@ export const generateIcons = async ({
     model
   })
 
-  const iconUrl = await generateIcon({
+  const iconUrl = await generateImage({
     iconDefinition,
     apiKey
   })
 
-  const response = await fetch(iconUrl)
+  let faviconDirectory = 'public/seo/icons'
+  let appleIconDirectory = 'public/seo/icons/apple'
 
-  if (!metadata) {
-    await saveIconDefaultLocation({ response })
-
-    return `<link rel="icon" href="https://example.com/seo/icons/favicon.png" />\n<link rel="apple-touch-icon" href="https://example.com/seo/icons/favicon.png" />\n`
+  if (isMetadata) {
+    faviconDirectory = appDirectory
+    appleIconDirectory = appDirectory
   }
 
-  const appDirectory = path.join('src/app')
-  if (existsSync(appDirectory)) {
-    await writeImage({
-      response,
-      nameFile: 'favicon.png',
-      pathFile: appDirectory
-    })
+  await saveIcons({
+    iconUrl,
+    faviconDirectory,
+    appleIconDirectory,
+    isMetadata
+  })
 
-    return null
-  }
-
-  await saveIconDefaultLocation({ response })
-
-  return {
-    icon: '/seo/icons/favicon.png',
-    apple: '/seo/icons/favicon.png'
+  if (!isMetadata) {
+    return `<link rel="icon" href="https://example.com/seo/icons/favicon.ico" />\n<link rel="apple-touch-icon" href="https://example.com/seo/icons/apple/apple-icon.png" />\n`
   }
 }
 
@@ -177,20 +170,17 @@ Please ensure your selection focuses on the following meta tags: ${SEO_TAGS.join
   return result.object.paths
 }
 
-const saveIconDefaultLocation = async ({ response }: { response: Response }) => {
-  const cwd = path.resolve(process.cwd())
-  const seoDirectory = `public/seo/icons`
-  const publicDirectory = `${cwd}/${seoDirectory}`
-
-  if (!existsSync(publicDirectory)) {
-    mkdirSync(publicDirectory, {
-      recursive: true
-    })
-  }
-
-  await writeImage({
-    response,
-    nameFile: 'favicon.png',
-    pathFile: publicDirectory
-  })
+const saveIcons = async ({
+  iconUrl,
+  faviconDirectory,
+  appleIconDirectory,
+  isMetadata
+}: {
+  iconUrl: string
+  faviconDirectory: string
+  appleIconDirectory: string
+  isMetadata: boolean
+}) => {
+  await generateFavicon({ iconUrl, path: faviconDirectory, isMetadata })
+  await generateAppleIcon({ iconUrl, path: appleIconDirectory, isMetadata })
 }
