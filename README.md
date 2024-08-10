@@ -88,13 +88,15 @@ npx seo-ai generate core icons creator
 npx seo-ai config [arguments]
 
 Arguments:
-set [arguments]    Sets an API Key. Available providers: OPENAI_API_KEY and MISTRAL_API_KEY
-get [arguments]    Retrieves an API Key using `mistral` or `openai`
-clear              Clears all API Keys
+set [arguments]      Sets an API Key. Available providers: OPENAI_API_KEY and MISTRAL_API_KEY
+get [arguments]      Retrieves an API Key using `mistral` , `openai` or `groq`
+clear                Clears all API Keys
+delete [arguments]   Delete a provider from the registry. Available providers: `mistral` , `openai` or `groq`
 
-# Example:
+# Examples:
 npx seo-ai config set OPENAI_API_KEY=<your-key>
 npx seo-ai config get openai
+npx seo-ai config delete openai
 npx seo-ai config clear
 ```
 
@@ -103,7 +105,7 @@ npx seo-ai config clear
 | Command           | Description                                                                                          |
 |-------------------|------------------------------------------------------------------------------------                   |
 | `core`            | Generate meta tags: `title`, `description`, `keywords`, `openGraph`, `twitter`, `robots`, `category`, `generator`,`applicationName` |
-| `icons`           | Define icon meta tags. It uses DALL-E 2, so you'll be prompted for a OpenAI Key                      |
+| `icons`           | Define icon meta tags. It uses DALL-E 2, so you'll be prompted for a OpenAI Key as long as you use other provider than OpenAI                       |
 | `metadataBase`    | Set the base URL for metadata relative paths. Available only for Next.js projects                    |
 | `authors`         | List authors of the content                                                                          |
 | `creator`         | Identify the creator of the content                                                                  |
