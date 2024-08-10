@@ -25,7 +25,7 @@ export const clearConf = () => {
 }
 
 export const deleteKey = ({ provider }: { provider: Providers }) => {
-  return conf.delete(provider)
+  conf.delete(provider)
 }
 
 export const getConf = () => conf.store

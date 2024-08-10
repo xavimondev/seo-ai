@@ -1,5 +1,5 @@
 import { Command } from 'commander'
-import { clearConf, getKey, getProvider, setKey } from '@/utils/conf'
+import { clearConf, deleteKey, getKey, getProvider, setKey } from '@/utils/conf'
 import { handleError } from '@/utils/handleError'
 import { logger } from '@/utils/logger'
 
@@ -43,6 +43,14 @@ export const config = new Command()
       } else if (mode === 'clear') {
         clearConf()
         logger.info('Configuration cleared!')
+      } else if (mode === 'delete') {
+        if (!keyValues) {
+          logger.error(`No provider specified`)
+          process.exit(0)
+        }
+
+        deleteKey({ provider: keyValues })
+        logger.info(`${keyValues} key deleted!`)
       }
     } catch (error) {
       handleError(error)
