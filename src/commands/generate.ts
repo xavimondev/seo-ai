@@ -1,5 +1,5 @@
 import { Command } from 'commander'
-import { cancel, text, spinner, multiselect, isCancel, outro } from '@clack/prompts'
+import { cancel, text, spinner, multiselect, isCancel, outro, select } from '@clack/prompts'
 import { z } from 'zod'
 import { type LanguageModel } from 'ai'
 import { createMistral } from '@ai-sdk/mistral'
@@ -38,11 +38,26 @@ export const generate = new Command()
     let seoTags = options.tags ?? []
     let { isNextAppDirectory: isMetadata, appDirectory } = getNextAppDirectory({ html: opts.html })
 
-    const lastProvider = Object.keys(getConf()).at(-1) as Providers | undefined
-    if (!lastProvider) {
+    const providersRegistry = Object.keys(getConf())
+    if (providersRegistry.length === 0) {
       logger.info(`You need to configure your provider first. Run:`)
       logger.success(`npx seo-ai config set YOUR_AI_PROVIDER=YOUR_API_KEY`)
       process.exit(0)
+    }
+
+    let lastProvider = providersRegistry.at(0) as Providers
+
+    if (providersRegistry.length > 1) {
+      lastProvider = (await select({
+        message: `You have multiple providers configured. Please select one:`,
+        // @ts-ignore
+        options: providersRegistry.map((provider) => ({ label: provider, value: provider }))
+      })) as Providers
+
+      if (isCancel(lastProvider)) {
+        cancel('Operation cancelled.')
+        process.exit(0)
+      }
     }
 
     try {
@@ -168,14 +183,6 @@ export const generate = new Command()
           if (!icons) continue
 
           HTML_METATAGS = HTML_METATAGS.concat(icons as string)
-          // if (isMetadata && icons) {
-          //   SEO_METADATA = {
-          //     ...SEO_METADATA,
-          //     icons: icons as Icon
-          //   }
-          // } else {
-          //   HTML_METATAGS = HTML_METATAGS.concat(icons as string)
-          // }
         } else {
           if (isMetadata) {
             const getTagContent = SEO_GENERATOR[seoTag]
