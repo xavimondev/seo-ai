@@ -174,5 +174,5 @@ export const OPTIONS_TAGS: OptionTag[] = [
   { value: 'formatDetection', label: 'Format Detection' },
   { value: 'manifest', label: 'Manifest' },
   { value: 'verification', label: 'Verification' },
-  { value: 'viewport', label: 'Colors' }
+  { value: 'viewport', label: 'Colors' } // only when using nextjs
 ]

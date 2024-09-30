@@ -105,7 +105,7 @@ npx seo-ai config clear
 | Command           | Description                                                                                          |
 |-------------------|------------------------------------------------------------------------------------                   |
 | `core`            | Generate meta tags: `title`, `description`, `keywords`, `openGraph`, `twitter`, `robots`, `category`, `generator`,`applicationName` |
-| `icons`           | Define icon meta tags. It uses DALL-E 2, so you'll be prompted for a OpenAI Key as long as you use other provider than OpenAI                       |
+| `icons`           | Define icon meta tags. It uses DALL-E 2, so you'll be prompted for an OpenAI Key if you choose a provider other than OpenAI.                       |
 | `metadataBase`    | Set the base URL for metadata relative paths. Available only for Next.js projects                    |
 | `authors`         | List authors of the content                                                                          |
 | `creator`         | Identify the creator of the content                                                                  |
