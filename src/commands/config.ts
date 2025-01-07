@@ -1,7 +1,8 @@
 import { Command } from 'commander'
-import { clearConf, deleteKey, getKey, getProvider, setKey } from '@/utils/conf'
+import { clearConf, deleteKey, getKey, setKey } from '@/utils/store'
 import { handleError } from '@/utils/handleError'
 import { logger } from '@/utils/logger'
+import { DEFAULT_AI_PROVIDER } from '@/constants'
 
 export const config = new Command()
   .name('config')
@@ -17,14 +18,14 @@ export const config = new Command()
           process.exit(0)
         }
 
-        const key = getKey({ provider: keyValues })
+        const key = getKey()
 
         if (!key) {
           logger.error(`No key found for ${keyValues}`)
           process.exit(0)
         }
 
-        logger.info(`${keyValues} key: ${getKey({ provider: keyValues })}`)
+        logger.info(`${keyValues} key: ${getKey()}`)
       } else if (mode === 'set') {
         if (!keyValues) {
           logger.error(`No key provided`)
@@ -39,7 +40,7 @@ export const config = new Command()
         }
 
         setKey({ keyName, keyValue: value })
-        logger.info(`${getProvider({ keyName })} key updated!`)
+        logger.info(`${DEFAULT_AI_PROVIDER} key updated!`)
       } else if (mode === 'clear') {
         clearConf()
         logger.info('Configuration cleared!')
@@ -49,7 +50,7 @@ export const config = new Command()
           process.exit(0)
         }
 
-        deleteKey({ provider: keyValues })
+        deleteKey()
         logger.info(`${keyValues} key deleted!`)
       }
     } catch (error) {

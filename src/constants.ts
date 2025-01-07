@@ -176,3 +176,6 @@ export const OPTIONS_TAGS: OptionTag[] = [
   { value: 'verification', label: 'Verification' },
   { value: 'viewport', label: 'Colors' } // only when using nextjs
 ]
+
+export const DEFAULT_AI_PROVIDER = 'openai'
+export const DEFAULT_AI_MODEL = 'GPT-4o'

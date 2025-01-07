@@ -10,7 +10,7 @@ import { existsSync, mkdirSync } from 'node:fs'
 import { handleError } from '@/utils/handleError'
 import { SEO_GENERATOR, SEO_GENERATOR_HTML } from '@/utils/seoGeneration'
 import { logger } from '@/utils/logger'
-import { getConf, getKey, Providers } from '@/utils/conf'
+import { getConf, getKey } from '@/utils/store'
 import {
   generateHTMLTags,
   generateIcons,
@@ -19,7 +19,6 @@ import {
 } from '@/utils/ai'
 import { execa } from '@/utils/execa'
 import { DIRECTORIES_TO_IGNORE, FILES_TO_IGNORE, OPTIONS_TAGS, SeoMetadata } from '@/constants'
-import { Icon } from '@/types'
 
 const generateSchema = z.object({
   tags: z.array(z.string()).optional(),
@@ -40,24 +39,11 @@ export const generate = new Command()
     const providersRegistry = Object.keys(getConf())
     if (providersRegistry.length === 0) {
       logger.info(`You need to configure your provider first. Run:`)
-      logger.success(`npx seo-ai config set YOUR_AI_PROVIDER=YOUR_API_KEY`)
+      logger.success(`npx seo-ai config set OPENAI_API_KEY=YOUR_API_KEY`)
       process.exit(0)
     }
 
-    let lastProvider = providersRegistry.at(0) as Providers
-
-    if (providersRegistry.length > 1) {
-      lastProvider = (await select({
-        message: `You have multiple providers configured. Please select one:`,
-        // @ts-ignore
-        options: providersRegistry.map((provider) => ({ label: provider, value: provider }))
-      })) as Providers
-
-      if (isCancel(lastProvider)) {
-        cancel('Operation cancelled.')
-        process.exit(0)
-      }
-    }
+    let lastProvider = providersRegistry.at(0) as string
 
     try {
       const optionsSelect = !isMetadata
@@ -84,8 +70,8 @@ export const generate = new Command()
       let openaiIconKey: string | symbol = ''
 
       if (seoTags.includes('icons') || seoTags.includes('core')) {
-        const apiKey = getKey({ provider: lastProvider }) as string
-        model = await getAIProvider({ lastProvider, apiKey })
+        const apiKey = getKey() as string
+        model = await getAIProvider({ apiKey })
         if (!model) {
           logger.error('Invalid provider')
           process.exit(0)
@@ -117,20 +103,20 @@ export const generate = new Command()
 
           // Filtering files that are not in the ignore list
           if (gitTree !== '') {
-            if (seoTags.includes('icons') && lastProvider !== 'openai') {
-              openaiIconKey = await text({
-                message: 'Using DALL-E for icons, please enter your OpenAI API Key',
-                placeholder: 'sk-proj-82mlo09s',
-                validate(value) {
-                  const descriptionLength = value.trim().length
-                  if (descriptionLength === 0) return `OpenAI API Key is required!`
-                }
-              })
-              if (isCancel(openaiIconKey)) {
-                cancel('Operation cancelled.')
-                process.exit(0)
-              }
-            }
+            // if (seoTags.includes('icons')) {
+            //   openaiIconKey = await text({
+            //     message: 'Using DALL-E for icons, please enter your OpenAI API Key',
+            //     placeholder: 'sk-proj-82mlo09s',
+            //     validate(value) {
+            //       const descriptionLength = value.trim().length
+            //       if (descriptionLength === 0) return `OpenAI API Key is required!`
+            //     }
+            //   })
+            //   if (isCancel(openaiIconKey)) {
+            //     cancel('Operation cancelled.')
+            //     process.exit(0)
+            //   }
+            // }
 
             const suggestedPaths = await generateSuggestedPaths({ gitTree, model })
             PROJECT_OVERVIEW = await generateProjectSummary({ suggestedPaths })
@@ -170,7 +156,7 @@ export const generate = new Command()
             HTML_METATAGS = await generateHTMLTags({ projectSummary: PROJECT_OVERVIEW, model })
           }
         } else if (seoTag === 'icons' && model) {
-          const keyForIcons = openaiIconKey || (getKey({ provider: 'openai' }) as string)
+          const keyForIcons = getKey()
           const icons = await generateIcons({
             projectSummary: PROJECT_OVERVIEW,
             isMetadata,
@@ -255,21 +241,12 @@ const getNextAppDirectory = ({ html }: { html: boolean }) => {
   }
 }
 
-const getAIProvider = async ({
-  lastProvider,
-  apiKey
-}: {
-  lastProvider: string
-  apiKey: string
-}) => {
-  if (lastProvider === 'openai') {
-    const openai = createOpenAI({
-      apiKey,
-      compatibility: 'strict'
-    })
-    return openai('gpt-4o')
-  }
-  return
+const getAIProvider = async ({ apiKey }: { apiKey: string }) => {
+  const openai = createOpenAI({
+    apiKey,
+    compatibility: 'strict'
+  })
+  return openai('gpt-4o')
 }
 
 const generateSuggestedPaths = async ({
