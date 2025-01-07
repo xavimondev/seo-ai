@@ -2,7 +2,6 @@ import { Command } from 'commander'
 import { cancel, text, spinner, multiselect, isCancel, outro, select } from '@clack/prompts'
 import { z } from 'zod'
 import { type LanguageModel } from 'ai'
-import { createMistral } from '@ai-sdk/mistral'
 import { createOpenAI } from '@ai-sdk/openai'
 import fs from 'node:fs/promises'
 import path from 'node:path'
@@ -263,23 +262,12 @@ const getAIProvider = async ({
   lastProvider: string
   apiKey: string
 }) => {
-  if (lastProvider === 'mistral') {
-    const mistral = createMistral({
-      apiKey
-    })
-    return mistral('mistral-large-latest')
-  } else if (lastProvider === 'openai') {
+  if (lastProvider === 'openai') {
     const openai = createOpenAI({
       apiKey,
       compatibility: 'strict'
     })
     return openai('gpt-4o')
-  } else if (lastProvider === 'groq') {
-    const groq = createOpenAI({
-      baseURL: 'https://api.groq.com/openai/v1',
-      apiKey: apiKey
-    })
-    return groq('llama-3.1-70b-versatile')
   }
   return
 }

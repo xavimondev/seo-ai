@@ -1,11 +1,9 @@
 import Conf from 'conf'
 
-export type Providers = 'openai' | 'mistral' | 'groq'
+export type Providers = 'openai'
 
 const providers: Record<string, Providers> = {
-  OPENAI_API_KEY: 'openai',
-  MISTRAL_API_KEY: 'mistral',
-  GROQ_API_KEY: 'groq'
+  OPENAI_API_KEY: 'openai'
 }
 
 export const getProvider = ({ keyName }: { keyName: string }) => providers[keyName]

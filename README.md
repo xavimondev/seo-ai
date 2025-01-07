@@ -27,24 +27,6 @@ You can use one of the following AI providers to generate SEO data:
 npx seo-ai config set OPENAI_API_KEY=<your-key>
 ```
 
-### MISTRAL_API_KEY
-
-- Go to the [Mistral](https://www.mistral.ai/) and retrieve your API key from the [API settings](https://console.mistral.ai/api-keys/).
-- Set the key:
-
-```bash
-npx seo-ai config set MISTRAL_API_KEY=<your-key>
-```
-
-### GROQ_API_KEY
-
-- Go to the [Groq Console](https://console.groq.com/keys) and generate your API key.
-- Set the key:
-
-```bash
-npx seo-ai config set GROQ_API_KEY=<your-key>
-```
-
 ### Run
 
 ```sh
@@ -88,10 +70,10 @@ npx seo-ai generate core icons creator
 npx seo-ai config [arguments]
 
 Arguments:
-set [arguments]      Sets an API Key. Available providers: OPENAI_API_KEY and MISTRAL_API_KEY
-get [arguments]      Retrieves an API Key using `mistral` , `openai` or `groq`
+set [arguments]      Sets an API Key.
+get [arguments]      Retrieves an API Key using `openai`
 clear                Clears all API Keys
-delete [arguments]   Delete a provider from the registry. Available providers: `mistral` , `openai` or `groq`
+delete [arguments]   Delete a provider from the registry. Available providers:`openai`
 
 # Examples:
 npx seo-ai config set OPENAI_API_KEY=<your-key>
@@ -115,9 +97,9 @@ npx seo-ai config clear
 | `assets`          | Specify the assets related to the content                                                            |
 | `archives`        | List archives related to the content                                                                 |
 | `referrer`        | The referrer setting for the document                                                                |
-| `alternates`      | The canonical and alternate URLs for the document                                                    |
 | `formatDetection` | Indicates if devices should try to interpret various formats and make actionable links out of them   |
 | `manifest`        | Specify a link to the web application's manifest file                                                |
+| `alternates`      | The canonical and alternate URLs for the document                                                    |
 | `verification`    | The common verification tokens for the document                                                      |
 | `viewport`        | The viewport setting for the document                                                                |
 
