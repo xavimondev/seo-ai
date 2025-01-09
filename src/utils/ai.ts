@@ -16,6 +16,26 @@ const SEO_TAGS = [
   'generator'
 ]
 
+export const getStructureSummary = async ({
+  model,
+  projectStructure
+}: {
+  model: LanguageModel
+  projectStructure: string
+}) => {
+  const { text } = await generateText({
+    model,
+    prompt: `Given the directory structure of a project: 
+    ${projectStructure}
+
+    Focus on its purpose and main functionalities, avoiding any mention of file names or technical implementation details.
+    Exclude quotes, code snippets, or bullet points from your response.
+    Generate a concise 40-word overview of what the application does.`
+  })
+
+  return text
+}
+
 export const generateProjectDescription = async ({
   model,
   projectSummary
